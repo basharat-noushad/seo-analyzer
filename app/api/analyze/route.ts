@@ -202,6 +202,33 @@ const STOP_WORDS = new Set([
 ]);
 
 // ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Creates a standardized error response with urlContext
+ */
+function createErrorResponse(
+  message: string,
+  code: string,
+  urlContext?: 'competitor' | 'mine'
+): NextResponse {
+  return NextResponse.json(
+    {
+      error: true,
+      message,
+      code,
+      urlContext,
+      statusCode: code === 'RATE_LIMIT_EXCEEDED' ? 429 : code === 'ROBOTS_TXT_DISALLOWED' ? 403 : 400,
+      timestamp: new Date().toISOString(),
+    },
+    {
+      status: code === 'RATE_LIMIT_EXCEEDED' ? 429 : code === 'ROBOTS_TXT_DISALLOWED' ? 403 : 400
+    }
+  );
+}
+
+// ============================================================================
 // MAIN HANDLER
 // ============================================================================
 
@@ -214,49 +241,41 @@ export async function POST(req: NextRequest) {
 
     // Validate required field
     if (!body.competitorUrl) {
-      return NextResponse.json({
-        error: true,
-        message: 'competitorUrl is required',
-        code: 'MALFORMED_REQUEST',
-        statusCode: 400,
-        timestamp: new Date().toISOString(),
-      }, { status: 400 });
+      return createErrorResponse(
+        'competitorUrl is required',
+        'MALFORMED_REQUEST',
+        'competitor'
+      );
     }
 
     // Validate URLs
     const competitorValidation = validateUrl(body.competitorUrl);
     if (!competitorValidation.valid) {
-      return NextResponse.json({
-        error: true,
-        message: competitorValidation.error || 'Invalid competitor URL',
-        code: 'INVALID_URL',
-        statusCode: 400,
-        timestamp: new Date().toISOString(),
-      }, { status: 400 });
+      return createErrorResponse(
+        competitorValidation.error || 'Invalid competitor URL',
+        'INVALID_URL',
+        'competitor'
+      );
     }
 
     let myUrlValidation = { valid: true, error: null };
     if (body.myUrl) {
       myUrlValidation = validateUrl(body.myUrl);
       if (!myUrlValidation.valid) {
-        return NextResponse.json({
-          error: true,
-          message: myUrlValidation.error || 'Invalid myUrl',
-          code: 'INVALID_URL',
-          statusCode: 400,
-          timestamp: new Date().toISOString(),
-        }, { status: 400 });
+        return createErrorResponse(
+          myUrlValidation.error || 'Invalid myUrl',
+          'INVALID_URL',
+          'mine'
+        );
       }
 
       // Check if URLs are the same
       if (body.competitorUrl === body.myUrl) {
-        return NextResponse.json({
-          error: true,
-          message: 'Both URLs cannot be the same',
-          code: 'INVALID_URL',
-          statusCode: 400,
-          timestamp: new Date().toISOString(),
-        }, { status: 400 });
+        return createErrorResponse(
+          'Competitor URL and your URL must be different',
+          'INVALID_URL',
+          'mine'
+        );
       }
     }
 
@@ -286,23 +305,19 @@ export async function POST(req: NextRequest) {
       : [await checkRobotsTxt(body.competitorUrl)];
 
     if (!robotsChecks[0].allowed) {
-      return NextResponse.json({
-        error: true,
-        message: 'Analysis blocked: robots.txt disallows crawling of competitor URL',
-        code: 'ROBOTS_TXT_DISALLOWED',
-        statusCode: 403,
-        timestamp: new Date().toISOString(),
-      }, { status: 403 });
+      return createErrorResponse(
+        'Analysis blocked: robots.txt disallows crawling of competitor URL',
+        'ROBOTS_TXT_DISALLOWED',
+        'competitor'
+      );
     }
 
     if (body.myUrl && !robotsChecks[1]?.allowed) {
-      return NextResponse.json({
-        error: true,
-        message: 'Analysis blocked: robots.txt disallows crawling of your URL',
-        code: 'ROBOTS_TXT_DISALLOWED',
-        statusCode: 403,
-        timestamp: new Date().toISOString(),
-      }, { status: 403 });
+      return createErrorResponse(
+        'Analysis blocked: robots.txt disallows crawling of your URL',
+        'ROBOTS_TXT_DISALLOWED',
+        'mine'
+      );
     }
 
     // Analyze URL(s) - parallel if both provided

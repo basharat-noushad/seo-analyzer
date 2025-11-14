@@ -8,6 +8,8 @@
 
 import { useState } from 'react';
 import { AdSlot } from '@/components/AdSlot';
+import { LoadingSkeleton, LoadingProgress } from '@/components/LoadingSkeleton';
+import { useUrlValidation } from '@/hooks/useUrlValidation';
 
 // ============================================================================
 // TYPES (matching API types)
@@ -209,10 +211,26 @@ export default function CompetitorAnalyzerPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('meta');
 
+  // Client-side validation
+  const {
+    competitorError,
+    myUrlError,
+    isValid,
+    validate
+  } = useUrlValidation(competitorUrl, myUrl);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    // Validate before submitting
+    const isFormValid = validate();
+    if (!isFormValid) {
+      setError('Please fix the validation errors above');
+      return;
+    }
+
+    setLoading(true);
     setResult(null);
 
     try {
@@ -220,24 +238,35 @@ export default function CompetitorAnalyzerPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          competitorUrl,
-          myUrl: myUrl || undefined,
+          competitorUrl: competitorUrl.trim(),
+          myUrl: myUrl.trim() || undefined,
         }),
       });
 
       const data = await response.json();
 
       if (data.error) {
-        setError(data.message || 'Analysis failed');
+        // Show specific error based on urlContext
+        let errorMsg = data.message || 'Analysis failed';
+        if (data.urlContext === 'competitor') {
+          errorMsg = `Competitor URL: ${data.message}`;
+        } else if (data.urlContext === 'mine') {
+          errorMsg = `Your URL: ${data.message}`;
+        }
+        setError(errorMsg);
       } else {
         setResult(data);
         // Scroll to results
         setTimeout(() => {
-          document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('results')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
         }, 100);
       }
     } catch (err: any) {
-      setError('Network error. Please try again.');
+      console.error('Analysis error:', err);
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -331,11 +360,26 @@ export default function CompetitorAnalyzerPage() {
                   id="competitorUrl"
                   value={competitorUrl}
                   onChange={(e) => setCompetitorUrl(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base"
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 text-base ${
+                    competitorError
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+                  }`}
                   placeholder="https://competitor.com/page"
+                  disabled={loading}
+                  aria-invalid={!!competitorError}
+                  aria-describedby={competitorError ? 'competitor-error' : undefined}
                   required
                 />
               </div>
+              {competitorError && (
+                <p id="competitor-error" className="mt-2 text-sm text-red-600 flex items-start">
+                  <svg className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  {competitorError}
+                </p>
+              )}
             </div>
 
             {/* My URL (Optional) */}
@@ -354,23 +398,43 @@ export default function CompetitorAnalyzerPage() {
                   id="myUrl"
                   value={myUrl}
                   onChange={(e) => setMyUrl(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base"
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 text-base ${
+                    myUrlError
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+                  }`}
                   placeholder="https://yoursite.com/page"
+                  disabled={loading}
+                  aria-invalid={!!myUrlError}
+                  aria-describedby={myUrlError ? 'my-url-error' : 'my-url-hint'}
                 />
               </div>
-              <p className="mt-2 text-sm text-gray-500 flex items-start">
-                <svg className="w-4 h-4 text-primary-500 mr-1 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <span>Add your URL to see side-by-side comparison and get improvement recommendations</span>
-              </p>
+              {myUrlError ? (
+                <p id="my-url-error" className="mt-2 text-sm text-red-600 flex items-start">
+                  <svg className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  {myUrlError}
+                </p>
+              ) : (
+                <p id="my-url-hint" className="mt-2 text-sm text-gray-500 flex items-start">
+                  <svg className="w-4 h-4 text-primary-500 mr-1 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <span>Add your URL to see side-by-side comparison and get improvement recommendations</span>
+                </p>
+              )}
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-primary-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              disabled={loading || !isValid}
+              className={`w-full py-4 px-6 rounded-lg font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors flex items-center justify-center ${
+                loading || !isValid
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500'
+              }`}
             >
               {loading ? (
                 <>
@@ -413,11 +477,70 @@ export default function CompetitorAnalyzerPage() {
         </div>
       </section>
 
+      {/* Empty State - shown when no analysis has been run */}
+      {!loading && !result && !error && (
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <svg
+              className="mx-auto h-16 w-16 text-gray-400 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Ready to Analyze
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Enter a competitor&apos;s URL above to get started with comprehensive SEO analysis.
+            </p>
+            <div className="text-sm text-gray-500">
+              <p className="mb-2">You&apos;ll receive insights on:</p>
+              <ul className="text-left max-w-md mx-auto space-y-1">
+                <li className="flex items-center">
+                  <svg className="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Meta tags and SEO elements
+                </li>
+                <li className="flex items-center">
+                  <svg className="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Content structure and keywords
+                </li>
+                <li className="flex items-center">
+                  <svg className="h-4 w-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Links, images, and technical SEO
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading State - shown during analysis */}
+      {loading && (
+        <LoadingProgress
+          competitorUrl={competitorUrl}
+          myUrl={myUrl || undefined}
+        />
+      )}
+
       {/* Ad Slot - Top (appears after submission) */}
       {result && <AdSlot position="top" />}
 
       {/* Results Section */}
-      {result && result.competitor.success && (
+      {!loading && result && result.competitor.success && (
         <section id="results" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           {/* Summary Cards */}
           <div className="mb-8">
