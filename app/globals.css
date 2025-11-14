@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+body {
+  @apply antialiased;
+}
+
+/* Ad slot styles to prevent CLS */
+.ad-slot {
+  @apply text-center my-8 mx-auto;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad-label {
+  @apply text-xs uppercase text-gray-400 mb-1;
+}
