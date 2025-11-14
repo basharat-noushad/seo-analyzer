@@ -21,8 +21,8 @@ interface AdSlotProps {
   /** Position/type of ad slot */
   position: 'top' | 'middle' | 'bottom' | 'sidebar';
 
-  /** Your ad slot ID from AdSense (e.g., '1234567890') */
-  adSlot: string;
+  /** Your ad slot ID from AdSense (e.g., '1234567890') - Optional, uses placeholder if not provided */
+  adSlot?: string;
 
   /** Ad format - 'auto' is recommended for responsive */
   adFormat?: 'auto' | 'fluid' | 'rectangle' | 'horizontal' | 'vertical';
@@ -36,6 +36,17 @@ interface AdSlotProps {
 
 // TODO: Replace with your actual AdSense publisher ID
 const PUBLISHER_ID = 'ca-pub-XXXXXXXXXXXX';
+
+/**
+ * Default placeholder ad slot IDs
+ * Replace these with your actual ad slot IDs from AdSense
+ */
+const DEFAULT_AD_SLOTS = {
+  top: '0000000001',
+  middle: '0000000002',
+  bottom: '0000000003',
+  sidebar: '0000000004',
+};
 
 /**
  * Ad dimensions with reserved heights for CLS prevention
@@ -75,6 +86,9 @@ export function AdSlot({
   const hasInitialized = useRef(false);
   const [isProduction, setIsProduction] = useState(false);
 
+  // Use provided adSlot or default placeholder
+  const effectiveAdSlot = adSlot || DEFAULT_AD_SLOTS[position];
+
   useEffect(() => {
     // Check if running in production
     setIsProduction(process.env.NODE_ENV === 'production');
@@ -98,11 +112,11 @@ export function AdSlot({
 
       hasInitialized.current = true;
 
-      console.log(`[AdSense] Initialized ad slot: ${position} (${adSlot})`);
+      console.log(`[AdSense] Initialized ad slot: ${position} (${effectiveAdSlot})`);
     } catch (error) {
       console.error('[AdSense] Error initializing ad:', error);
     }
-  }, [isProduction, position, adSlot]);
+  }, [isProduction, position, effectiveAdSlot]);
 
   const dimensions = AD_DIMENSIONS[position];
 
@@ -130,7 +144,7 @@ export function AdSlot({
           <div className="text-sm font-semibold">AdSense Placeholder</div>
           <div className="text-xs mt-1">Position: {position}</div>
           <div className="text-xs">Size: {dimensions.description}</div>
-          <div className="text-xs opacity-60 mt-1">Slot: {adSlot}</div>
+          <div className="text-xs opacity-60 mt-1">Slot: {effectiveAdSlot}</div>
           <div className="text-xs opacity-40 mt-2 italic">
             (Real ads in production)
           </div>
@@ -144,14 +158,14 @@ export function AdSlot({
     <div
       className={`ad-slot-container ${dimensions.width} ${dimensions.height} mx-auto my-8 flex items-center justify-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden ${className}`}
       data-ad-position={position}
-      data-ad-slot={adSlot}
+      data-ad-slot={effectiveAdSlot}
     >
       <ins
         ref={adRef}
         className="adsbygoogle"
         style={{ display: 'block' }}
         data-ad-client={PUBLISHER_ID}
-        data-ad-slot={adSlot}
+        data-ad-slot={effectiveAdSlot}
         data-ad-format={adFormat}
         data-full-width-responsive={fullWidthResponsive.toString()}
       />
