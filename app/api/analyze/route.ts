@@ -258,7 +258,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let myUrlValidation = { valid: true, error: null };
+    let myUrlValidation: { valid: boolean; error?: string } = { valid: true };
     if (body.myUrl) {
       myUrlValidation = validateUrl(body.myUrl);
       if (!myUrlValidation.valid) {
@@ -569,11 +569,13 @@ async function analyzeUrl(url: string): Promise<PageAnalysisResult> {
 
     const { html, metadata } = fetchResult;
 
+    if (!html) {
+      errors.push('No HTML content received');
+      return createErrorResult(url, timestamp, errors);
+    }
+
     // Parse HTML with Cheerio
-    const $ = cheerio.load(html, {
-      normalizeWhitespace: true,
-      decodeEntities: true,
-    });
+    const $ = cheerio.load(html);
 
     // Extract all metrics
     const basicInfo: BasicInfo = {
@@ -1146,8 +1148,8 @@ function generateComparison(
   }
 
   // Check H1
-  if (competitor.headings.h1Count === 1 && yours.headings.h1Count !== 1) {
-    if (yours.headings.h1Count === 0) {
+  if (competitor.headings.quality.h1Count === 1 && yours.headings.quality.h1Count !== 1) {
+    if (yours.headings.quality.h1Count === 0) {
       opportunities.push({
         category: 'seo',
         severity: 'high',
@@ -1155,12 +1157,12 @@ function generateComparison(
         description: 'Your page is missing an H1 heading.',
         recommendation: 'Add a single, descriptive H1 heading to your page.',
       });
-    } else if (yours.headings.h1Count > 1) {
+    } else if (yours.headings.quality.h1Count > 1) {
       opportunities.push({
         category: 'seo',
         severity: 'medium',
         title: 'Multiple H1 Headings',
-        description: `Your page has ${yours.headings.h1Count} H1 headings. Competitor has just 1.`,
+        description: `Your page has ${yours.headings.quality.h1Count} H1 headings. Competitor has just 1.`,
         recommendation: 'Use only one H1 heading per page for better SEO.',
       });
     }
@@ -1223,7 +1225,7 @@ function generateComparison(
   // SEO factors
   if (yours.seo.title.content) score += 5;
   if (yours.seo.metaDescription.content) score += 5;
-  if (yours.headings.h1Count === 1) score += 5;
+  if (yours.headings.quality.h1Count === 1) score += 5;
   if (yours.seo.canonical.exists) score += 3;
 
   // Content factors
