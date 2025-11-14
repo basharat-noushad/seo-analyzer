@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton, LoadingProgress } from '@/components/LoadingSkeleton';
 import { useUrlValidation } from '@/hooks/useUrlValidation';
+import { StructuredData } from '@/components/StructuredData';
 
 // ============================================================================
 // TYPES (matching API types)
@@ -274,6 +275,9 @@ export default function CompetitorAnalyzerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      {/* Structured Data for SEO */}
+      <StructuredData />
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

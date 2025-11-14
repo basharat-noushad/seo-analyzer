@@ -1,10 +1,88 @@
+/**
+ * Root Layout
+ *
+ * Wraps the entire application with global metadata, styles, and scripts.
+ * Includes AdSense script for monetization.
+ */
+
 import type { Metadata } from 'next';
+import { AdSenseScript } from '@/components/AdSenseScript';
 import './globals.css';
 
+// Base URL for your application
+// TODO: Replace with your actual domain
+const baseUrl = 'https://yourdomain.com';
+
 export const metadata: Metadata = {
-  title: 'SEO Analyzer - Competitor Page Analyzer',
-  description: 'Analyze any webpage for on-page SEO metrics and compare against competitors',
-  keywords: 'SEO, analyzer, competitor analysis, on-page SEO, meta tags',
+  metadataBase: new URL(baseUrl),
+
+  // Title configuration with template
+  title: {
+    default: 'SEO Analyzer Pro - Free SEO Tools',
+    template: '%s | SEO Analyzer Pro',
+  },
+
+  description:
+    'Free SEO analysis tools for webmasters and marketers. Analyze competitor pages, check on-page SEO, and get actionable insights to improve your rankings.',
+
+  keywords: [
+    'seo analyzer',
+    'seo tools',
+    'competitor analysis',
+    'seo audit',
+    'free seo tools',
+    'on-page seo',
+    'meta tags checker',
+  ],
+
+  authors: [{ name: 'SEO Analyzer Pro', url: baseUrl }],
+  creator: 'SEO Analyzer Pro',
+  publisher: 'SEO Analyzer Pro',
+  category: 'Technology',
+
+  // Verification codes for search engines
+  // TODO: Add your verification codes
+  verification: {
+    google: 'your-google-site-verification-code',
+    // yandex: 'your-yandex-verification-code',
+    // bing: 'your-bing-verification-code',
+  },
+
+  // Icons
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon-16x16.png',
+  },
+
+  // Manifest for PWA (optional)
+  manifest: '/manifest.json',
+
+  // Open Graph defaults
+  openGraph: {
+    type: 'website',
+    siteName: 'SEO Analyzer Pro',
+    locale: 'en_US',
+  },
+
+  // Twitter Card defaults
+  twitter: {
+    card: 'summary_large_image',
+    site: '@yourtwitterhandle', // TODO: Replace with your Twitter handle
+  },
+
+  // Robots directives
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -14,7 +92,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50">{children}</body>
+      <head>
+        {/* Google AdSense Script */}
+        {/* TODO: Replace with your actual publisher ID */}
+        <AdSenseScript publisherId="ca-pub-XXXXXXXXXXXX" />
+      </head>
+      <body className="min-h-screen bg-gray-50 antialiased">
+        {children}
+      </body>
     </html>
   );
 }
