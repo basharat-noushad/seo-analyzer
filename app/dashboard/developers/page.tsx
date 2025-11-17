@@ -3,7 +3,7 @@
 import { Code, Key, Webhook, Book, ExternalLink } from "lucide-react"
 import Link from "next/link"
 
-export const dynamic = \'force-dynamic\'
+export const dynamic = 'force-dynamic'
 
 export default function DevelopersPage() {
   return (
