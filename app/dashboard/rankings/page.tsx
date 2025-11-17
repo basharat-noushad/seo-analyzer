@@ -55,7 +55,7 @@ export default async function RankingsPage() {
       },
       _count: {
         select: {
-          keywordRankings: true,
+          rankings: true,
         },
       },
     },
@@ -295,7 +295,7 @@ export default async function RankingsPage() {
                           <div>
                             <div className="text-gray-600 text-xs mb-1">Checks</div>
                             <div className="text-lg font-bold">
-                              {keyword._count.keywordRankings}
+                              {keyword._count.rankings}
                             </div>
                           </div>
                         </div>
