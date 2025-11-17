@@ -23,6 +23,7 @@ import {
   Globe,
   AlertCircle,
   FileText,
+  Clock,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
@@ -60,6 +61,11 @@ const navigation = [
     name: "Rankings",
     href: "/dashboard/rankings",
     icon: BarChart3,
+  },
+  {
+    name: "Monitoring",
+    href: "/dashboard/monitoring",
+    icon: Clock,
   },
   {
     name: "Issues",
