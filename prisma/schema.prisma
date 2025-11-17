@@ -109,7 +109,7 @@ model Project {
 }
 
 model ProjectPage {
-  id                UUID      @id @default(uuid())
+  id                String    @id @default(uuid())
   projectId         String    @map("project_id")
   url               String
   pageTitle         String?   @map("page_title")
