@@ -25,6 +25,7 @@ import {
   FileText,
   Clock,
   Bell,
+  TrendingUp,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
@@ -82,6 +83,11 @@ const navigation = [
     name: "Reports",
     href: "/dashboard/reports",
     icon: FileText,
+  },
+  {
+    name: "Analytics",
+    href: "/dashboard/analytics",
+    icon: TrendingUp,
   },
 ]
 
