@@ -107,16 +107,16 @@ export default async function RankingsPage() {
   }
 
   // Calculate stats
-  const topRankings = keywords.filter(k => k.currentRank && k.currentRank <= 10).length
+  const topRankings = keywords.filter((k: any) => k.currentRank && k.currentRank <= 10).length
   const improving = keywords.filter(
-    k => k.currentRank && k.previousRank && k.currentRank < k.previousRank
+    (k: any) => k.currentRank && k.previousRank && k.currentRank < k.previousRank
   ).length
   const declining = keywords.filter(
-    k => k.currentRank && k.previousRank && k.currentRank > k.previousRank
+    (k: any) => k.currentRank && k.previousRank && k.currentRank > k.previousRank
   ).length
 
   // Group keywords by project
-  const keywordsByProject = keywords.reduce((acc, keyword) => {
+  const keywordsByProject = keywords.reduce((acc: any, keyword: any) => {
     const projectId = keyword.project?.id || "none"
     if (!acc[projectId]) {
       acc[projectId] = {
@@ -237,7 +237,7 @@ export default async function RankingsPage() {
           </CardContent>
         </Card>
       ) : (
-        Object.entries(keywordsByProject).map(([projectId, data]) => (
+        Object.entries(keywordsByProject).map(([projectId, data]: [string, any]) => (
           <Card key={projectId}>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -254,7 +254,7 @@ export default async function RankingsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {data.keywords.map((keyword) => (
+                {data.keywords.map((keyword: any) => (
                   <div
                     key={keyword.id}
                     className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -327,7 +327,7 @@ export default async function RankingsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {rankings.slice(0, 20).map((ranking) => (
+              {rankings.slice(0, 20).map((ranking: any) => (
                 <div
                   key={ranking.id}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"

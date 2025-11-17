@@ -130,17 +130,18 @@ const settingsNavigation = [
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
 
-  const tierLevel = {
+  const tierLevels = {
     free: 0,
     pro: 1,
     agency: 2,
-  }[user.tier] || 0
+  }
+
+  const userTierLevel = tierLevels[user.tier as keyof typeof tierLevels] || 0
 
   const canAccess = (itemTier?: "pro" | "agency") => {
     if (!itemTier) return true
-    const requiredLevel = tierLevel
-    const itemLevel = tierLevel[itemTier as keyof typeof tierLevel] || 0
-    return requiredLevel >= itemLevel
+    const requiredLevel = tierLevels[itemTier as keyof typeof tierLevels] || 0
+    return userTierLevel >= requiredLevel
   }
 
   return (

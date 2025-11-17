@@ -84,7 +84,7 @@ export default async function AnalysesPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {analyses.map((analysis) => (
+          {analyses.map((analysis: any) => (
             <Card key={analysis.id} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between">

@@ -5,8 +5,7 @@
  * Use these in Server Components and API routes.
  */
 
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { getServerSession } from "@/lib/auth-config"
 import { prisma } from "./db"
 import { redirect } from "next/navigation"
 
@@ -16,7 +15,7 @@ import { redirect } from "next/navigation"
  */
 export async function getCurrentUser() {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession()
 
     if (!session?.user?.email) {
       return null

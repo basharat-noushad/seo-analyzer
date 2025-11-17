@@ -69,8 +69,8 @@ export default async function ProjectDetailPage({
     notFound()
   }
 
-  const criticalIssues = project.issues.filter((i) => i.severity === "critical").length
-  const highIssues = project.issues.filter((i) => i.severity === "high").length
+  const criticalIssues = project.issues.filter((i: any) => i.severity === "critical").length
+  const highIssues = project.issues.filter((i: any) => i.severity === "high").length
 
   return (
     <div className="space-y-6">
@@ -239,7 +239,7 @@ export default async function ProjectDetailPage({
               </div>
             ) : (
               <div className="space-y-3">
-                {project.analyses.map((analysis) => (
+                {project.analyses.map((analysis: any) => (
                   <div
                     key={analysis.id}
                     className="flex items-center justify-between p-3 border rounded-lg"
@@ -284,7 +284,7 @@ export default async function ProjectDetailPage({
               </div>
             ) : (
               <div className="space-y-3">
-                {project.issues.map((issue) => (
+                {project.issues.map((issue: any) => (
                   <div
                     key={issue.id}
                     className="flex items-start justify-between p-3 border rounded-lg"

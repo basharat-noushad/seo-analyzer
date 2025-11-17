@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { requireApiAuth } from "@/lib/auth"
-import cheerio from "cheerio"
+import * as cheerio from "cheerio"
 
 // Tier-based crawl limits
 const TIER_LIMITS = {
@@ -249,7 +249,7 @@ async function analyzePage(url: string): Promise<PageAnalysis> {
 
     // Count content
     const textContent = $("body").text().trim()
-    const words = textContent.split(/\s+/).filter(w => w.length > 0)
+    const words = textContent.split(/\s+/).filter((w: string) => w.length > 0)
     const wordCount = words.length
     const paragraphCount = $("p").length
 
@@ -259,7 +259,7 @@ async function analyzePage(url: string): Promise<PageAnalysis> {
 
     // Extract links
     const links: string[] = []
-    $("a[href]").each((_, el) => {
+    $("a[href]").each((_: number, el: any) => {
       const href = $(el).attr("href")
       if (href) {
         try {

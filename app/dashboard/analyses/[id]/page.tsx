@@ -294,7 +294,7 @@ export default async function AnalysisDetailPage({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {analysis.issues.map((issue) => (
+              {analysis.issues.map((issue: any) => (
                 <div
                   key={issue.id}
                   className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"

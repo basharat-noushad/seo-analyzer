@@ -5,83 +5,70 @@
  * Runs before every request to check if user is authenticated.
  */
 
-import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { getServerSession } from "@/lib/auth-config"
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token
-    const path = req.nextUrl.pathname
+export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname
 
-    // Check if accessing admin routes
-    if (path.startsWith("/admin")) {
-      if (token?.role !== "admin") {
-        return NextResponse.redirect(new URL("/dashboard", req.url))
-      }
-    }
+  // Public routes - always allow
+  const publicRoutes = [
+    "/",
+    "/features",
+    "/pricing",
+    "/blog",
+    "/docs",
+    "/login",
+    "/signup",
+    "/forgot-password",
+  ]
 
-    // Check if accessing protected API routes
-    if (path.startsWith("/api/")) {
-      // Allow public APIs
-      if (
-        path.startsWith("/api/auth") ||
-        path.startsWith("/api/public")
-      ) {
-        return NextResponse.next()
-      }
+  const isPublicRoute = publicRoutes.some((route) => path === route) ||
+    path.startsWith("/blog/") ||
+    path.startsWith("/reset-password") ||
+    path.startsWith("/api/auth") ||
+    path.startsWith("/api/public") ||
+    path.startsWith("/tools/free-page-analyzer")
 
-      // Require authentication for other APIs
-      if (!token) {
+  if (isPublicRoute) {
+    return NextResponse.next()
+  }
+
+  // Check authentication for protected routes
+  const isProtectedRoute =
+    path.startsWith("/dashboard") ||
+    path.startsWith("/tools") ||
+    path.startsWith("/admin") ||
+    (path.startsWith("/api/") && !path.startsWith("/api/auth") && !path.startsWith("/api/public"))
+
+  if (isProtectedRoute) {
+    const session = await getServerSession()
+
+    if (!session) {
+      // For API routes, return 401
+      if (path.startsWith("/api/")) {
         return NextResponse.json(
           { error: "Unauthorized" },
           { status: 401 }
         )
       }
+
+      // For pages, redirect to login
+      return NextResponse.redirect(new URL("/login", req.url))
     }
 
-    // Allow request to proceed
-    return NextResponse.next()
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const path = req.nextUrl.pathname
-
-        // Public routes - always allow
-        if (
-          path === "/" ||
-          path === "/features" ||
-          path === "/pricing" ||
-          path === "/blog" ||
-          path.startsWith("/blog/") ||
-          path === "/docs" ||
-          path === "/login" ||
-          path === "/signup" ||
-          path === "/forgot-password" ||
-          path.startsWith("/reset-password") ||
-          path.startsWith("/api/auth") ||
-          path.startsWith("/api/public") ||
-          path.startsWith("/tools/free-page-analyzer")
-        ) {
-          return true
-        }
-
-        // Protected routes - require authentication
-        if (
-          path.startsWith("/dashboard") ||
-          path.startsWith("/tools") ||
-          path.startsWith("/admin") ||
-          path.startsWith("/api/")
-        ) {
-          return !!token
-        }
-
-        // Default: allow
-        return true
-      },
-    },
+    // Check admin routes
+    if (path.startsWith("/admin")) {
+      const user = session.user as any
+      if (user?.role !== "admin") {
+        return NextResponse.redirect(new URL("/dashboard", req.url))
+      }
+    }
   }
-)
+
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: [

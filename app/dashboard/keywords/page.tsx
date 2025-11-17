@@ -77,7 +77,7 @@ export default async function KeywordsPage() {
   }
 
   // Group keywords by project
-  const keywordsByProject = keywords.reduce((acc, keyword) => {
+  const keywordsByProject = keywords.reduce((acc: any, keyword: any) => {
     const projectId = keyword.project?.id || "none"
     if (!acc[projectId]) {
       acc[projectId] = {
@@ -130,7 +130,7 @@ export default async function KeywordsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {keywords.filter(k => k.currentRank && k.currentRank <= 10).length}
+              {keywords.filter((k: any) => k.currentRank && k.currentRank <= 10).length}
             </div>
             <p className="text-xs text-gray-600">Top 10</p>
           </CardContent>
@@ -146,7 +146,7 @@ export default async function KeywordsPage() {
             <div className="text-3xl font-bold text-primary">
               {keywords.length > 0
                 ? Math.round(
-                    keywords.reduce((sum, k) => sum + (k.searchVolume || 0), 0) /
+                    keywords.reduce((sum: any, k: any) => sum + (k.searchVolume || 0), 0) /
                       keywords.length
                   ).toLocaleString()
                 : 0}
@@ -165,7 +165,7 @@ export default async function KeywordsPage() {
             <div className="text-3xl font-bold text-primary">
               {keywords.length > 0
                 ? Math.round(
-                    keywords.reduce((sum, k) => sum + (k.difficulty || 0), 0) /
+                    keywords.reduce((sum: any, k: any) => sum + (k.difficulty || 0), 0) /
                       keywords.length
                   )
                 : 0}
@@ -195,7 +195,7 @@ export default async function KeywordsPage() {
           </CardContent>
         </Card>
       ) : (
-        Object.entries(keywordsByProject).map(([projectId, data]) => (
+        Object.entries(keywordsByProject).map(([projectId, data]: [string, any]) => (
           <Card key={projectId}>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -212,7 +212,7 @@ export default async function KeywordsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {data.keywords.map((keyword) => (
+                {data.keywords.map((keyword: any) => (
                   <div
                     key={keyword.id}
                     className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"

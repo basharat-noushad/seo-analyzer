@@ -179,7 +179,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {projects.map((project) => (
+                {projects.map((project: any) => (
                   <Link
                     key={project.id}
                     href={`/dashboard/projects/${project.id}`}
@@ -228,7 +228,7 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {analyses.map((analysis) => (
+                {analyses.map((analysis: any) => (
                   <Link
                     key={analysis.id}
                     href={`/dashboard/analyses/${analysis.id}`}

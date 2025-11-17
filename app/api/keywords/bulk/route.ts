@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify all projects belong to user
-    const projectIds = [...new Set(keywords.map(kw => kw.projectId))]
+    const projectIds = [...new Set(keywords.map((kw: any) => kw.projectId))]
     const projects = await prisma.project.findMany({
       where: {
         id: { in: projectIds },
@@ -59,11 +59,11 @@ export async function POST(req: NextRequest) {
     })
 
     const existingSet = new Set(
-      existingKeywords.map(kw => `${kw.projectId}:${kw.keyword.toLowerCase()}`)
+      existingKeywords.map((kw: any) => `${kw.projectId}:${kw.keyword.toLowerCase()}`)
     )
 
     // Filter out duplicates
-    const newKeywords = keywords.filter(kw => {
+    const newKeywords = keywords.filter((kw: any) => {
       const key = `${kw.projectId}:${kw.keyword.toLowerCase()}`
       return !existingSet.has(key)
     })
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     // Create keyword records
     const created = await prisma.keyword.createMany({
-      data: newKeywords.map(kw => ({
+      data: newKeywords.map((kw: any) => ({
         userId: user.id,
         projectId: kw.projectId,
         keyword: kw.keyword.toLowerCase(),
