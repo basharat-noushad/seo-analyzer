@@ -73,8 +73,6 @@ const toolsNavigation = [
     name: "Site Audit",
     href: "/tools/site-audit",
     icon: Globe,
-    badge: "Pro",
-    tier: "pro" as const,
   },
   {
     name: "Keyword Research",

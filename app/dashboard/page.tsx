@@ -27,6 +27,7 @@ import {
   TrendingUp,
   Plus,
   ArrowRight,
+  Globe,
 } from "lucide-react"
 
 export default async function DashboardPage() {
@@ -277,7 +278,7 @@ export default async function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Button asChild className="h-auto py-4 flex flex-col items-center gap-2">
               <Link href="/dashboard/projects/new">
                 <Plus className="h-6 w-6" />
@@ -288,6 +289,12 @@ export default async function DashboardPage() {
               <Link href="/tools/page-analyzer">
                 <FileSearch className="h-6 w-6" />
                 <span>Analyze Page</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center gap-2">
+              <Link href="/tools/site-audit">
+                <Globe className="h-6 w-6" />
+                <span>Site Audit</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto py-4 flex flex-col items-center gap-2">
