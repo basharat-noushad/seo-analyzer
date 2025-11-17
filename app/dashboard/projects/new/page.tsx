@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/card"
 import { ArrowLeft } from "lucide-react"
 
-export const dynamic = \'force-dynamic\'
+export const dynamic = 'force-dynamic'
 
 export default function NewProjectPage() {
   const router = useRouter()
