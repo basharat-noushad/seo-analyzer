@@ -209,7 +209,7 @@ export async function retryWebhookDelivery(deliveryId: string) {
       delivery.webhook.id,
       delivery.webhook.url,
       delivery.webhook.secret,
-      delivery.payload as WebhookPayload
+      delivery.payload as unknown as WebhookPayload
     )
 
     // Update delivery record
