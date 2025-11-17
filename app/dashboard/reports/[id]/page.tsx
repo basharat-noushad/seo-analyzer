@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 
+export const dynamic = \'force-dynamic\'
+
 export default function ReportDetailPage() {
   const router = useRouter()
   const params = useParams()

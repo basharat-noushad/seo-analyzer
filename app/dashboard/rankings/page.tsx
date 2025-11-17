@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { BarChart3, Plus, TrendingUp, TrendingDown, Minus, Search, Calendar } from "lucide-react"
 
+export const dynamic = \'force-dynamic\'
+
 export default async function RankingsPage() {
   const user = await getCurrentUser()
 

@@ -6,6 +6,8 @@
  * Research keywords with search volume, difficulty, and suggestions
  */
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"

@@ -6,6 +6,8 @@
  * Crawls multiple pages of a website and generates comprehensive SEO audit
  */
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"

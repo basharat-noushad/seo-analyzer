@@ -18,6 +18,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { FolderKanban, Plus, Globe, BarChart3, AlertCircle } from "lucide-react"
 
+export const dynamic = \'force-dynamic\'
+
 export default async function ProjectsPage() {
   const user = await getCurrentUser()
 

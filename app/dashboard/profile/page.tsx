@@ -16,6 +16,8 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, Mail, Calendar, Crown } from "lucide-react"
 
+export const dynamic = \'force-dynamic\'
+
 export default async function ProfilePage() {
   const user = await getCurrentUser()
 

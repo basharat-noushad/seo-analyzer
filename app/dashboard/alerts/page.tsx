@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 
+export const dynamic = \'force-dynamic\'
+
 export default function AlertsPage() {
   const router = useRouter()
   const [alerts, setAlerts] = useState<any[]>([])

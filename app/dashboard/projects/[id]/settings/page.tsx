@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 
+export const dynamic = \'force-dynamic\'
+
 export default function ProjectSettingsPage() {
   const router = useRouter()
   const params = useParams()
