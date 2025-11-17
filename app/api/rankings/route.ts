@@ -25,16 +25,16 @@ export async function GET(req: NextRequest) {
       // Get rankings for all keywords in a project
       where.keyword = {
         projectId: projectId,
-        userId: user.id,
+        project: { userId: user.id },
       }
     } else {
-      // Get all rankings for user
+      // Get all rankings for user's projects
       where.keyword = {
-        userId: user.id,
+        project: { userId: user.id },
       }
     }
 
-    const rankings = await prisma.ranking.findMany({
+    const rankings = await prisma.keywordRanking.findMany({
       where,
       orderBy: { checkedAt: "desc" },
       take: 500,
@@ -103,41 +103,30 @@ export async function POST(req: NextRequest) {
       // Create new keyword record
       keywordRecord = await prisma.keyword.create({
         data: {
-          userId: user.id,
           projectId,
           keyword: keyword.toLowerCase(),
-          currentRank: rank,
-          bestRank: rank,
-          previousRank: null,
+          currentRank: rank || null,
+          targetUrl: url || null,
         },
       })
     } else {
       // Update keyword with new rank
-      const updates: any = {
-        previousRank: keywordRecord.currentRank,
-        currentRank: rank,
-      }
-
-      // Update best rank if current is better
-      if (rank && (!keywordRecord.bestRank || rank < keywordRecord.bestRank)) {
-        updates.bestRank = rank
-      }
-
       keywordRecord = await prisma.keyword.update({
         where: { id: keywordRecord.id },
-        data: updates,
+        data: {
+          currentRank: rank || null,
+        },
       })
     }
 
     // Create ranking record
-    const ranking = await prisma.ranking.create({
+    const ranking = await prisma.keywordRanking.create({
       data: {
         keywordId: keywordRecord.id,
         rank: rank || null,
         url: url || null,
         searchEngine: searchEngine || "google",
-        country: country || "US",
-        checkedAt: new Date(),
+        location: country || "US",
       },
       include: {
         keyword: {

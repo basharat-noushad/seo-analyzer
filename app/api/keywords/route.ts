@@ -15,9 +15,23 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const projectId = searchParams.get("projectId")
 
-    const where: any = { userId: user.id }
+    // Build query to get keywords for user's projects
+    const where: any = {}
     if (projectId) {
+      // Verify project belongs to user
+      const project = await prisma.project.findFirst({
+        where: { id: projectId, userId: user.id },
+      })
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found" },
+          { status: 404 }
+        )
+      }
       where.projectId = projectId
+    } else {
+      // Get keywords for all user's projects
+      where.project = { userId: user.id }
     }
 
     const keywords = await prisma.keyword.findMany({
@@ -50,7 +64,7 @@ export async function POST(req: NextRequest) {
     const user = await requireApiAuth()
     const body = await req.json()
 
-    const { projectId, keyword, searchVolume, difficulty, cpc, competition } = body
+    const { projectId, keyword, searchVolume, difficulty, targetUrl } = body
 
     // Validation
     if (!projectId || !keyword) {
@@ -93,16 +107,12 @@ export async function POST(req: NextRequest) {
     // Create keyword record
     const savedKeyword = await prisma.keyword.create({
       data: {
-        userId: user.id,
         projectId,
         keyword: keyword.toLowerCase(),
         searchVolume: searchVolume || null,
-        difficulty: difficulty || null,
-        cpc: cpc || null,
-        competition: competition || null,
+        difficultyScore: difficulty || null,
         currentRank: null,
-        bestRank: null,
-        previousRank: null,
+        targetUrl: targetUrl || null,
       },
       include: {
         project: {

@@ -24,7 +24,6 @@ interface RankResult {
   url: string
   currentRank: number | null
   previousRank: number | null
-  bestRank: number | null
   topRankingPages: TopRankingPage[]
   searchEngine: string
   country: string
@@ -56,7 +55,6 @@ export async function POST(req: NextRequest) {
 
     // Check if keyword is tracked for this project/user
     let previousRank: number | null = null
-    let bestRank: number | null = null
 
     if (projectId) {
       const existingKeyword = await prisma.keyword.findFirst({
@@ -68,21 +66,21 @@ export async function POST(req: NextRequest) {
 
       if (existingKeyword) {
         previousRank = existingKeyword.currentRank
-        bestRank = existingKeyword.bestRank
       }
     } else {
-      // Check without project
+      // Check without project - find in user's projects
       const existingKeyword = await prisma.keyword.findFirst({
         where: {
-          userId: user.id,
           keyword: keyword.toLowerCase(),
-          project: { domain: { contains: domain } },
+          project: {
+            domain: { contains: domain },
+            userId: user.id
+          }
         },
       })
 
       if (existingKeyword) {
         previousRank = existingKeyword.currentRank
-        bestRank = existingKeyword.bestRank
       }
     }
 
@@ -94,19 +92,11 @@ export async function POST(req: NextRequest) {
       page => new URL(page.url).hostname.replace("www.", "") === domain
     )?.position || null
 
-    // Update best rank
-    if (currentRank) {
-      if (!bestRank || currentRank < bestRank) {
-        bestRank = currentRank
-      }
-    }
-
     const result: RankResult = {
       keyword,
       url: normalizedUrl,
       currentRank,
       previousRank,
-      bestRank,
       topRankingPages: rankData.topRankingPages,
       searchEngine,
       country,
