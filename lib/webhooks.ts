@@ -134,7 +134,7 @@ export async function triggerWebhook(
           data: {
             webhookId: webhook.id,
             event,
-            payload,
+            payload: payload as any, // Cast to satisfy Prisma Json type
             statusCode: result.statusCode,
             response: result.response,
             error: result.error,
