@@ -36,10 +36,15 @@ model User {
   analyses          Analysis[]
   alerts            Alert[]
   reports           Report[]
+  ownedTeams        Team[]       @relation("TeamOwner")
   teamMembers       TeamMember[]
-  apiKeys           ApiKey[]
-  usageLogs         UsageLog[]
   createdTeamMembers TeamMember[] @relation("InvitedBy")
+  sentInvitations   TeamInvitation[] @relation("InvitedTeamMember")
+  addedProjects     TeamProject[] @relation("ProjectAdder")
+  activityLogs      ActivityLog[] @relation("UserActivities")
+  apiKeys           ApiKey[]
+  webhooks          Webhook[]    @relation("UserWebhooks")
+  usageLogs         UsageLog[]
   sessions          Session[]
 
   @@index([email])
@@ -96,6 +101,7 @@ model Project {
   alerts               Alert[]
   reports              Report[]
   teamMembers          TeamMember[]
+  teamProjects         TeamProject[] @relation("TeamProjects")
 
   @@index([userId])
   @@index([domain])
@@ -326,25 +332,123 @@ model Report {
 // TEAM COLLABORATION
 // ============================================================================
 
+model Team {
+  id            String    @id @default(uuid())
+  name          String
+  slug          String    @unique
+  description   String?
+
+  ownerId       String    @map("owner_id")
+  plan          String    @default("free") // free, team, enterprise
+
+  logoUrl       String?   @map("logo_url")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  owner         User      @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members       TeamMember[]
+  invitations   TeamInvitation[]
+  projects      TeamProject[]
+  activityLogs  ActivityLog[]
+
+  @@index([ownerId])
+  @@index([slug])
+  @@map("teams")
+}
+
 model TeamMember {
   id          String    @id @default(uuid())
-  projectId   String    @map("project_id")
+  teamId      String    @map("team_id")
+  projectId   String?   @map("project_id")
   userId      String    @map("user_id")
 
-  role        String    // admin, editor, viewer
+  role        String    // owner, admin, member, viewer
   invitedBy   String?   @map("invited_by")
 
   createdAt   DateTime  @default(now()) @map("created_at")
 
   // Relations
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   inviter     User?     @relation("InvitedBy", fields: [invitedBy], references: [id], onDelete: SetNull)
 
-  @@unique([projectId, userId])
+  @@unique([teamId, userId])
+  @@index([teamId])
   @@index([projectId])
   @@index([userId])
   @@map("team_members")
+}
+
+model TeamInvitation {
+  id          String    @id @default(uuid())
+  teamId      String    @map("team_id")
+  projectId   String?   @map("project_id")
+
+  email       String
+  role        String    // admin, member, viewer
+  token       String    @unique
+
+  invitedBy   String    @map("invited_by")
+  expiresAt   DateTime  @map("expires_at")
+  acceptedAt  DateTime? @map("accepted_at")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  inviter     User      @relation("InvitedTeamMember", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([token])
+  @@index([email])
+  @@map("team_invitations")
+}
+
+model TeamProject {
+  id          String    @id @default(uuid())
+  teamId      String    @map("team_id")
+  projectId   String    @map("project_id")
+
+  addedBy     String    @map("added_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  project     Project   @relation("TeamProjects", fields: [projectId], references: [id], onDelete: Cascade)
+  adder       User      @relation("ProjectAdder", fields: [addedBy], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, projectId])
+  @@index([teamId])
+  @@index([projectId])
+  @@map("team_projects")
+}
+
+model ActivityLog {
+  id          String    @id @default(uuid())
+  teamId      String?   @map("team_id")
+  projectId   String?   @map("project_id")
+  userId      String    @map("user_id")
+
+  action      String    // project_created, member_invited, analysis_run, etc.
+  entityType  String?   @map("entity_type") // project, analysis, member, etc.
+  entityId    String?   @map("entity_id")
+
+  metadata    Json?     // Additional context data
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  team        Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User      @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activity_logs")
 }
 
 // ============================================================================
@@ -359,6 +463,8 @@ model ApiKey {
   keyHash     String    @unique @map("key_hash")
   keyPrefix   String    @map("key_prefix") // for display: "sk_live_abc..."
 
+  permissions Json?     // Scoped permissions: { "projects": ["read", "write"], "analyses": ["read"] }
+
   lastUsedAt  DateTime? @map("last_used_at")
   expiresAt   DateTime? @map("expires_at")
 
@@ -366,10 +472,83 @@ model ApiKey {
 
   // Relations
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageLogs   ApiUsageLog[]
 
   @@index([userId])
   @@index([keyHash])
   @@map("api_keys")
+}
+
+model ApiUsageLog {
+  id            String    @id @default(uuid())
+  apiKeyId      String    @map("api_key_id")
+
+  endpoint      String
+  method        String
+  statusCode    Int       @map("status_code")
+  responseTime  Int?      @map("response_time") // milliseconds
+
+  ipAddress     String?   @map("ip_address")
+  userAgent     String?   @map("user_agent")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  apiKey        ApiKey    @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  @@index([apiKeyId])
+  @@index([createdAt])
+  @@map("api_usage_logs")
+}
+
+model Webhook {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  projectId     String?   @map("project_id")
+
+  name          String
+  url           String
+  events        String[]  // analysis_completed, rank_changed, issue_detected, etc.
+  secret        String    // for signature verification
+
+  isActive      Boolean   @default(true) @map("is_active")
+
+  lastTriggeredAt DateTime? @map("last_triggered_at")
+  failureCount  Int       @default(0) @map("failure_count")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user          User      @relation("UserWebhooks", fields: [userId], references: [id], onDelete: Cascade)
+  deliveries    WebhookDelivery[]
+
+  @@index([userId])
+  @@index([projectId])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id            String    @id @default(uuid())
+  webhookId     String    @map("webhook_id")
+
+  event         String
+  payload       Json
+  statusCode    Int?      @map("status_code")
+  response      String?
+  error         String?
+
+  attempts      Int       @default(1)
+  deliveredAt   DateTime? @map("delivered_at")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  webhook       Webhook   @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
 }
 
 // ============================================================================

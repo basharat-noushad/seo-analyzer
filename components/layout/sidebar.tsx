@@ -50,6 +50,11 @@ const navigation = [
     icon: FolderKanban,
   },
   {
+    name: "Teams",
+    href: "/dashboard/teams",
+    icon: Users,
+  },
+  {
     name: "Analyses",
     href: "/dashboard/analyses",
     icon: FileSearch,
