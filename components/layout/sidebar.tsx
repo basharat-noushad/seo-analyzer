@@ -52,6 +52,16 @@ const navigation = [
     icon: FileSearch,
   },
   {
+    name: "Keywords",
+    href: "/dashboard/keywords",
+    icon: Target,
+  },
+  {
+    name: "Rankings",
+    href: "/dashboard/rankings",
+    icon: BarChart3,
+  },
+  {
     name: "Issues",
     href: "/dashboard/issues",
     icon: AlertCircle,
