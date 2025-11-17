@@ -20,7 +20,7 @@ export default async function KeywordsPage() {
   }
 
   const keywords = await prisma.keyword.findMany({
-    where: { userId: user.id },
+    where: { project: { userId: user.id } },
     orderBy: { createdAt: "desc" },
     take: 200,
     include: {
@@ -165,7 +165,7 @@ export default async function KeywordsPage() {
             <div className="text-3xl font-bold text-primary">
               {keywords.length > 0
                 ? Math.round(
-                    keywords.reduce((sum: any, k: any) => sum + (k.difficulty || 0), 0) /
+                    keywords.reduce((sum: any, k: any) => sum + (k.difficultyScore || 0), 0) /
                       keywords.length
                   )
                 : 0}
@@ -239,13 +239,13 @@ export default async function KeywordsPage() {
                             </div>
                           )}
 
-                          {keyword.difficulty !== null && (
+                          {keyword.difficultyScore !== null && (
                             <div>
                               <div className="text-gray-600 text-xs">Difficulty</div>
-                              <div className={`font-bold ${getDifficultyColor(keyword.difficulty)}`}>
-                                {keyword.difficulty}/100
+                              <div className={`font-bold ${getDifficultyColor(keyword.difficultyScore)}`}>
+                                {keyword.difficultyScore}/100
                               </div>
-                              {getDifficultyBadge(keyword.difficulty)}
+                              {getDifficultyBadge(keyword.difficultyScore)}
                             </div>
                           )}
 

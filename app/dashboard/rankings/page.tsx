@@ -20,10 +20,9 @@ export default async function RankingsPage() {
   }
 
   // Get recent rankings
-  const rankings = await prisma.ranking.findMany({
+  const rankings = await prisma.keywordRanking.findMany({
     where: {
-      keyword: {
-        userId: user.id,
+      keyword: { project: { userId: user.id },
       },
     },
     orderBy: { checkedAt: "desc" },
@@ -45,7 +44,7 @@ export default async function RankingsPage() {
 
   // Get all tracked keywords with their latest rankings
   const keywords = await prisma.keyword.findMany({
-    where: { userId: user.id },
+    where: { project: { userId: user.id } },
     include: {
       project: {
         select: {
@@ -56,7 +55,7 @@ export default async function RankingsPage() {
       },
       _count: {
         select: {
-          rankings: true,
+          keywordRankings: true,
         },
       },
     },
@@ -296,7 +295,7 @@ export default async function RankingsPage() {
                           <div>
                             <div className="text-gray-600 text-xs mb-1">Checks</div>
                             <div className="text-lg font-bold">
-                              {keyword._count.rankings}
+                              {keyword._count.keywordRankings}
                             </div>
                           </div>
                         </div>
@@ -346,7 +345,7 @@ export default async function RankingsPage() {
                         {new Date(ranking.checkedAt).toLocaleDateString()}
                       </span>
                       <span>{ranking.searchEngine}</span>
-                      <span>{ranking.country}</span>
+                      <span>{ranking.location}</span>
                     </div>
                   </div>
                   <div className={`text-2xl font-bold ${getRankColor(ranking.rank)}`}>
