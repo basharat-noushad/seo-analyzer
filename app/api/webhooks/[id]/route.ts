@@ -26,12 +26,6 @@ export async function GET(
           orderBy: { createdAt: "desc" },
           take: 20,
         },
-        project: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
       },
     })
 

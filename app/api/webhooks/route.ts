@@ -30,16 +30,11 @@ export async function GET(req: NextRequest) {
         url: true,
         events: true,
         isActive: true,
+        projectId: true,
         lastTriggeredAt: true,
         failureCount: true,
         createdAt: true,
         updatedAt: true,
-        project: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
       },
     })
 
