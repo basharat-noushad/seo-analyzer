@@ -49,7 +49,6 @@ export async function POST(req: NextRequest) {
     // Get existing keywords to avoid duplicates
     const existingKeywords = await prisma.keyword.findMany({
       where: {
-        userId: user.id,
         projectId: { in: projectIds },
       },
       select: {
@@ -82,16 +81,12 @@ export async function POST(req: NextRequest) {
     // Create keyword records
     const created = await prisma.keyword.createMany({
       data: newKeywords.map((kw: any) => ({
-        userId: user.id,
         projectId: kw.projectId,
         keyword: kw.keyword.toLowerCase(),
         searchVolume: kw.searchVolume || null,
-        difficulty: kw.difficulty || null,
-        cpc: kw.cpc || null,
-        competition: kw.competition || null,
-        currentRank: null,
-        bestRank: null,
-        previousRank: null,
+        difficultyScore: kw.difficulty || kw.difficultyScore || null,
+        currentRank: kw.currentRank || null,
+        targetUrl: kw.targetUrl || null,
       })),
     })
 
