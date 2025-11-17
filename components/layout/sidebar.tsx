@@ -24,6 +24,7 @@ import {
   AlertCircle,
   FileText,
   Clock,
+  Bell,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
@@ -66,6 +67,11 @@ const navigation = [
     name: "Monitoring",
     href: "/dashboard/monitoring",
     icon: Clock,
+  },
+  {
+    name: "Alerts",
+    href: "/dashboard/alerts",
+    icon: Bell,
   },
   {
     name: "Issues",

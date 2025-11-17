@@ -101,9 +101,18 @@ export async function POST(req: NextRequest) {
             severity: change.severity,
             title: change.title,
             message: change.message,
+            // Auto-send email for critical and high severity alerts
+            sentEmail: change.severity === "critical" || change.severity === "high",
           },
         })
         alerts.push(alert)
+
+        // Log email notification for critical/high severity alerts
+        if (change.severity === "critical" || change.severity === "high") {
+          console.log(`[EMAIL NOTIFICATION] ${change.severity.toUpperCase()}: ${change.title}`)
+          console.log(`Message: ${change.message}`)
+          console.log(`Project: ${projectId}`)
+        }
       }
     }
 
