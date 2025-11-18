@@ -24,6 +24,10 @@ export async function middleware(req: NextRequest) {
     "/login",
     "/signup",
     "/forgot-password",
+    "/competitor-analyzer",
+    "/privacy",
+    "/terms",
+    "/contact",
   ]
 
   const isPublicRoute = publicRoutes.some((route) => path === route) ||
@@ -32,8 +36,7 @@ export async function middleware(req: NextRequest) {
     path.startsWith("/api/auth") ||
     path.startsWith("/api/public") ||
     path.startsWith("/api/analyze") ||
-    path.startsWith("/tools/free-page-analyzer") ||
-    path === "/competitor-analyzer"
+    path.startsWith("/tools/free-page-analyzer")
 
   if (isPublicRoute) {
     return NextResponse.next()
