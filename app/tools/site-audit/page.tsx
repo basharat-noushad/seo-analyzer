@@ -6,9 +6,7 @@
  * Crawls multiple pages of a website and generates comprehensive SEO audit
  */
 
-export const dynamic = 'force-dynamic'
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -67,7 +65,7 @@ interface AuditResult {
   completedAt: string
 }
 
-export default function SiteAuditPage() {
+function SiteAuditContent() {
   const searchParams = useSearchParams()
   const projectId = searchParams.get("project")
 
@@ -530,5 +528,13 @@ export default function SiteAuditPage() {
         </Card>
       )}
     </div>
+  )
+}
+
+export default function SiteAuditPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SiteAuditContent />
+    </Suspense>
   )
 }

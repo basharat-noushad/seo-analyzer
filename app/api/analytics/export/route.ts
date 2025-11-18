@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
 import { prisma } from "@/lib/prisma"
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/analytics/export
  * Export analytics data in various formats (CSV, JSON)

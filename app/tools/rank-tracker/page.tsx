@@ -6,9 +6,7 @@
  * Check and track keyword rankings in search engines
  */
 
-export const dynamic = 'force-dynamic'
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -46,7 +44,7 @@ interface RankResult {
   checkedAt: string
 }
 
-export default function RankTrackerPage() {
+function RankTrackerContent() {
   const searchParams = useSearchParams()
   const initialKeyword = searchParams.get("keyword")
   const projectId = searchParams.get("project")
@@ -563,5 +561,13 @@ export default function RankTrackerPage() {
         </Card>
       )}
     </div>
+  )
+}
+
+export default function RankTrackerPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RankTrackerContent />
+    </Suspense>
   )
 }

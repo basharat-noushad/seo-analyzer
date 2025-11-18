@@ -6,9 +6,7 @@
  * Research keywords with search volume, difficulty, and suggestions
  */
 
-export const dynamic = 'force-dynamic'
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -46,7 +44,7 @@ interface ResearchResult {
   timestamp: string
 }
 
-export default function KeywordResearchPage() {
+function KeywordResearchContent() {
   const searchParams = useSearchParams()
   const projectId = searchParams.get("project")
 
@@ -486,5 +484,13 @@ export default function KeywordResearchPage() {
         </Card>
       )}
     </div>
+  )
+}
+
+export default function KeywordResearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <KeywordResearchContent />
+    </Suspense>
   )
 }

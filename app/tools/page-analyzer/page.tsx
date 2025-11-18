@@ -6,9 +6,7 @@
  * Analyzes pages with project integration and saves results to database
  */
 
-export const dynamic = 'force-dynamic'
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -30,7 +28,7 @@ import {
   BarChart3
 } from "lucide-react"
 
-export default function PageAnalyzerPage() {
+function PageAnalyzerContent() {
   const searchParams = useSearchParams()
   const projectId = searchParams.get("project")
 
@@ -409,5 +407,13 @@ export default function PageAnalyzerPage() {
         </Card>
       )}
     </div>
+  )
+}
+
+export default function PageAnalyzerPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PageAnalyzerContent />
+    </Suspense>
   )
 }
