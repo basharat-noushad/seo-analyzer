@@ -31,7 +31,9 @@ export async function middleware(req: NextRequest) {
     path.startsWith("/reset-password") ||
     path.startsWith("/api/auth") ||
     path.startsWith("/api/public") ||
-    path.startsWith("/tools/free-page-analyzer")
+    path.startsWith("/api/analyze") ||
+    path.startsWith("/tools/free-page-analyzer") ||
+    path === "/competitor-analyzer"
 
   if (isPublicRoute) {
     return NextResponse.next()
