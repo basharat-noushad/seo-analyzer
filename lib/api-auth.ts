@@ -71,7 +71,7 @@ export async function authenticateApiRequest(
       where: { id: apiKeyRecord.id },
       data: { lastUsedAt: new Date() },
     })
-    .catch((error) => console.error("Failed to update lastUsedAt:", error))
+    .catch((error: any) => console.error("Failed to update lastUsedAt:", error))
 
   // Return authentication context
   return {

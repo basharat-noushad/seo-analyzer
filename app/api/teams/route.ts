@@ -56,9 +56,9 @@ export async function GET(req: NextRequest) {
     })
 
     // Add user's role to each team
-    const teamsWithRole = teams.map((team) => {
+    const teamsWithRole = teams.map((team: any) => {
       const isOwner = team.ownerId === session.user.id
-      const membership = team.members.find((m) => m.userId === session.user.id)
+      const membership = team.members.find((m: any) => m.userId === session.user.id)
 
       return {
         ...team,

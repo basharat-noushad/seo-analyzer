@@ -164,12 +164,12 @@ export async function getUserTeams(userId: string) {
     }),
   ])
 
-  const ownedTeamsWithRole = ownedTeams.map((team) => ({
+  const ownedTeamsWithRole = ownedTeams.map((team: any) => ({
     ...team,
     userRole: "owner" as TeamRole,
   }))
 
-  const memberTeamsWithRole = memberTeams.map((member) => ({
+  const memberTeamsWithRole = memberTeams.map((member: any) => ({
     ...member.team,
     userRole: member.role as TeamRole,
   }))

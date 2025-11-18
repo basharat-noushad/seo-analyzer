@@ -94,14 +94,14 @@ export async function GET(
 
     // Check if user has access to this team
     const isOwner = team.ownerId === session.user.id
-    const isMember = team.members.some((m) => m.userId === session.user.id)
+    const isMember = team.members.some((m: any) => m.userId === session.user.id)
 
     if (!isOwner && !isMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     // Determine user's role
-    const membership = team.members.find((m) => m.userId === session.user.id)
+    const membership = team.members.find((m: any) => m.userId === session.user.id)
     const userRole = isOwner ? "owner" : membership?.role || "member"
 
     return NextResponse.json({

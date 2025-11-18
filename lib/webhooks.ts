@@ -121,7 +121,7 @@ export async function triggerWebhook(
 
     // Deliver to all webhooks (in parallel)
     const deliveries = await Promise.all(
-      webhooks.map(async (webhook) => {
+      webhooks.map(async (webhook: any) => {
         const result = await deliverWebhook(
           webhook.id,
           webhook.url,
