@@ -10,6 +10,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import type { CheerioAPI } from 'cheerio';
 
+// Force dynamic rendering since we use headers() for client IP
+export const dynamic = 'force-dynamic';
+
 // ============================================================================
 // TYPES
 // ============================================================================
