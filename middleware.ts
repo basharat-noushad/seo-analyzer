@@ -3,11 +3,13 @@
  *
  * Handles authentication and authorization for protected routes.
  * Runs before every request to check if user is authenticated.
+ *
+ * Note: Uses lightweight token checking to stay within Edge Runtime size limits.
  */
 
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { getServerSession } from "@/lib/auth-config"
+import { getToken } from "next-auth/jwt"
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
@@ -43,9 +45,13 @@ export async function middleware(req: NextRequest) {
     (path.startsWith("/api/") && !path.startsWith("/api/auth") && !path.startsWith("/api/public"))
 
   if (isProtectedRoute) {
-    const session = await getServerSession()
+    // Use getToken for Edge-compatible auth checking
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET
+    })
 
-    if (!session) {
+    if (!token) {
       // For API routes, return 401
       if (path.startsWith("/api/")) {
         return NextResponse.json(
@@ -60,8 +66,7 @@ export async function middleware(req: NextRequest) {
 
     // Check admin routes
     if (path.startsWith("/admin")) {
-      const user = session.user as any
-      if (user?.role !== "admin") {
+      if (token.role !== "admin") {
         return NextResponse.redirect(new URL("/dashboard", req.url))
       }
     }
