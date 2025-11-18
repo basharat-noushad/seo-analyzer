@@ -22,7 +22,7 @@ export const { auth } = NextAuth({
   callbacks: {
     // Minimal JWT callback for edge - no database access
     async jwt({ token, user }) {
-      if (user) {
+      if (user?.id) {
         token.id = user.id
         token.role = (user as any).role
         token.tier = (user as any).tier
@@ -31,7 +31,7 @@ export const { auth } = NextAuth({
     },
     // Minimal session callback for edge
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
         session.user.id = token.id as string
         session.user.role = token.role as string
         session.user.tier = token.tier as string
