@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
+    "postinstall": "PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 prisma generate",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
