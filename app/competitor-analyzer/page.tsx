@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton, LoadingProgress } from '@/components/LoadingSkeleton';
 import { useUrlValidation } from '@/hooks/useUrlValidation';
@@ -205,6 +206,7 @@ interface ApiErrorResponse {
 // ============================================================================
 
 export default function CompetitorAnalyzerPage() {
+  const { data: session } = useSession();
   const [competitorUrl, setCompetitorUrl] = useState('');
   const [myUrl, setMyUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -281,7 +283,42 @@ export default function CompetitorAnalyzerPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">SEO Analyzer Pro</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">SEO Analyzer Pro</h1>
+            <div className="flex items-center gap-4">
+              {session ? (
+                <>
+                  <a
+                    href="/dashboard"
+                    className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                  >
+                    Dashboard
+                  </a>
+                  <a
+                    href="/tools/page-analyzer"
+                    className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
+                  >
+                    Advanced Tools
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a
+                    href="/login"
+                    className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                  >
+                    Login
+                  </a>
+                  <a
+                    href="/signup"
+                    className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
+                  >
+                    Sign Up Free
+                  </a>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
