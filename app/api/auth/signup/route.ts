@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
         name,
         email,
         passwordHash,
-        emailVerified: false, // Require email verification in production
+        emailVerified: true, // Auto-verify for now (TODO: implement email verification)
+        emailVerifiedAt: new Date(),
         role: "user",
         tier: "free",
       },
