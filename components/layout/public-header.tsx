@@ -211,11 +211,11 @@ export function PublicHeader() {
             <Link href="/#features" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
               Features
             </Link>
-            <Link href="/#tools" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
-              Tools
-            </Link>
             <Link href="/#pricing" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
               Pricing
+            </Link>
+            <Link href="/docs" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
+              Docs
             </Link>
             <Link href="/competitor-analyzer" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
               Free Analyzer
@@ -283,18 +283,18 @@ export function PublicHeader() {
               Features
             </Link>
             <Link
-              href="/#tools"
-              className="block text-gray-700 hover:text-gray-900 font-medium transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Tools
-            </Link>
-            <Link
               href="/#pricing"
               className="block text-gray-700 hover:text-gray-900 font-medium transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               Pricing
+            </Link>
+            <Link
+              href="/docs"
+              className="block text-gray-700 hover:text-gray-900 font-medium transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Docs
             </Link>
             <Link
               href="/competitor-analyzer"

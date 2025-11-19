@@ -116,7 +116,6 @@ export async function middleware(req: NextRequest) {
     "/features",
     "/pricing",
     "/blog",
-    "/docs",
     "/login",
     "/signup",
     "/forgot-password",
@@ -128,11 +127,13 @@ export async function middleware(req: NextRequest) {
 
   const isPublicRoute = publicRoutes.some((route) => path === route) ||
     path.startsWith("/blog/") ||
+    path.startsWith("/docs") ||
     path.startsWith("/reset-password") ||
     path.startsWith("/api/auth/") ||
     path.startsWith("/api/public") ||
     path.startsWith("/api/analyze") ||
     path.startsWith("/api/health") ||
+    path.startsWith("/api/env-check") ||
     path.startsWith("/tools/free-page-analyzer")
 
   if (isPublicRoute) {
