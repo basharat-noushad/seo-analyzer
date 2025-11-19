@@ -49,8 +49,8 @@ function LoginForm() {
         setError(result.error || "Invalid email or password")
       } else if (result?.ok) {
         console.log("Login successful, redirecting to dashboard...")
-        router.push("/dashboard")
-        router.refresh()
+        // Use hard redirect to ensure session is properly loaded
+        window.location.href = "/dashboard"
       } else {
         console.error("Unexpected login response:", result)
         setError("Login failed. Please try again.")

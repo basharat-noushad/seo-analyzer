@@ -75,8 +75,8 @@ export default function SignUpPage() {
         setError("Account created but failed to sign in. Please try logging in.")
       } else if (result?.ok) {
         console.log("Login successful, redirecting to dashboard...")
-        router.push("/dashboard")
-        router.refresh()
+        // Use hard redirect to ensure session is properly loaded
+        window.location.href = "/dashboard"
       } else {
         console.error("Unexpected signIn response:", result)
         setError("Account created. Please try logging in manually.")
