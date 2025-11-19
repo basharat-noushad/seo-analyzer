@@ -51,17 +51,27 @@ export async function middleware(req: NextRequest) {
     (path.startsWith("/api/") && !path.startsWith("/api/auth") && !path.startsWith("/api/public"))
 
   if (isProtectedRoute) {
+    // Debug: Check if NEXTAUTH_SECRET is set
+    if (!process.env.NEXTAUTH_SECRET) {
+      console.error('[Middleware] CRITICAL: NEXTAUTH_SECRET is not set!')
+      return NextResponse.redirect(new URL("/login?error=configuration", req.url))
+    }
+
     // Use getToken for Edge-compatible auth checking
     const token = await getToken({
       req,
       secret: process.env.NEXTAUTH_SECRET
     })
 
-    // Debug logging in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Middleware] Protected route:', path)
-      console.log('[Middleware] Token exists:', !!token)
-      console.log('[Middleware] Token data:', token)
+    // Debug logging
+    console.log('[Middleware] Protected route:', path)
+    console.log('[Middleware] NEXTAUTH_SECRET exists:', !!process.env.NEXTAUTH_SECRET)
+    console.log('[Middleware] Token exists:', !!token)
+    if (token) {
+      console.log('[Middleware] Token email:', token.email)
+      console.log('[Middleware] Token id:', token.id)
+    } else {
+      console.log('[Middleware] Token is null - cannot decrypt session cookie')
     }
 
     if (!token) {
