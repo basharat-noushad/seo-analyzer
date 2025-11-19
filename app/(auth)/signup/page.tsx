@@ -59,6 +59,8 @@ export default function SignUpPage() {
         return
       }
 
+      console.log("Signup successful, attempting auto-login...")
+
       // Auto sign in after successful signup
       const result = await signIn("credentials", {
         email,
@@ -66,11 +68,18 @@ export default function SignUpPage() {
         redirect: false,
       })
 
+      console.log("SignIn result:", result)
+
       if (result?.error) {
+        console.error("Auto-login failed:", result.error)
         setError("Account created but failed to sign in. Please try logging in.")
-      } else {
+      } else if (result?.ok) {
+        console.log("Login successful, redirecting to dashboard...")
         router.push("/dashboard")
         router.refresh()
+      } else {
+        console.error("Unexpected signIn response:", result)
+        setError("Account created. Please try logging in manually.")
       }
     } catch (error) {
       setError("Something went wrong. Please try again.")

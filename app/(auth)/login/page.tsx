@@ -34,19 +34,29 @@ function LoginForm() {
     setLoading(true)
 
     try {
+      console.log("Attempting login for:", email)
+
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       })
 
+      console.log("Login result:", result)
+
       if (result?.error) {
-        setError("Invalid email or password")
-      } else {
+        console.error("Login error:", result.error)
+        setError(result.error || "Invalid email or password")
+      } else if (result?.ok) {
+        console.log("Login successful, redirecting to dashboard...")
         router.push("/dashboard")
         router.refresh()
+      } else {
+        console.error("Unexpected login response:", result)
+        setError("Login failed. Please try again.")
       }
     } catch (error) {
+      console.error("Login exception:", error)
       setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
