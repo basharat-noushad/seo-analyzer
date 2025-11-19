@@ -57,7 +57,16 @@ export async function middleware(req: NextRequest) {
       secret: process.env.NEXTAUTH_SECRET
     })
 
+    // Debug logging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Middleware] Protected route:', path)
+      console.log('[Middleware] Token exists:', !!token)
+      console.log('[Middleware] Token data:', token)
+    }
+
     if (!token) {
+      console.log('[Middleware] No token found, redirecting to login from:', path)
+
       // For API routes, return 401
       if (path.startsWith("/api/")) {
         return NextResponse.json(

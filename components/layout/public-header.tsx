@@ -12,8 +12,14 @@ import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
 export function PublicHeader() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Debug session state
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('[PublicHeader] Session status:', status)
+    console.log('[PublicHeader] Session data:', session)
+  }
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">

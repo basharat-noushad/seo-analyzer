@@ -82,12 +82,26 @@ export const authConfig = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production'
+      }
+    }
+  },
+
   pages: {
     signIn: "/login",
     signOut: "/",
     error: "/login",
     verifyRequest: "/login",
   },
+
+  trustHost: true, // Required for Vercel deployment
 
   callbacks: {
     // JWT callback - add custom fields to token
@@ -102,28 +116,6 @@ export const authConfig = {
       // Handle session updates
       if (trigger === "update" && session) {
         token = { ...token, ...session }
-      }
-
-      // Fetch latest user data on each request (optional - can be expensive)
-      if (token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email as string },
-          select: {
-            id: true,
-            role: true,
-            tier: true,
-            name: true,
-            avatarUrl: true,
-          }
-        })
-
-        if (dbUser) {
-          token.id = dbUser.id
-          token.role = dbUser.role
-          token.tier = dbUser.tier
-          token.name = dbUser.name
-          token.picture = dbUser.avatarUrl
-        }
       }
 
       return token
