@@ -33,7 +33,7 @@ export async function middleware(req: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) => path === route) ||
     path.startsWith("/blog/") ||
     path.startsWith("/reset-password") ||
-    path.startsWith("/api/auth") ||
+    path.startsWith("/api/auth/") ||
     path.startsWith("/api/public") ||
     path.startsWith("/api/analyze") ||
     path.startsWith("/api/health") ||

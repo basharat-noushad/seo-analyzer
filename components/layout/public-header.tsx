@@ -15,10 +15,14 @@ export function PublicHeader() {
   const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // Only consider authenticated if status is explicitly "authenticated"
+  const isAuthenticated = status === "authenticated" && session?.user
+
   // Debug session state
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  if (typeof window !== 'undefined') {
     console.log('[PublicHeader] Session status:', status)
     console.log('[PublicHeader] Session data:', session)
+    console.log('[PublicHeader] Is authenticated:', isAuthenticated)
   }
 
   return (
@@ -50,7 +54,7 @@ export function PublicHeader() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-4">
-            {session ? (
+            {isAuthenticated ? (
               <>
                 <Link
                   href="/dashboard"
@@ -130,7 +134,7 @@ export function PublicHeader() {
               Free Analyzer
             </Link>
             <div className="pt-4 border-t border-gray-200 space-y-2">
-              {session ? (
+              {isAuthenticated ? (
                 <>
                   <Link
                     href="/dashboard"

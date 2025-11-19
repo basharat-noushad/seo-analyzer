@@ -36,6 +36,10 @@ function LoginForm() {
     try {
       console.log("Attempting login for:", email)
 
+      // Clear any existing session data before login
+      localStorage.clear()
+      sessionStorage.clear()
+
       const result = await signIn("credentials", {
         email,
         password,
