@@ -282,21 +282,58 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check rate limit (simplified - in production use Redis or similar)
-    const clientIp = getClientIp(req);
-    const rateLimitCheck = checkRateLimit(clientIp);
-    if (!rateLimitCheck.allowed) {
-      return NextResponse.json({
-        error: true,
-        message: `Rate limit exceeded. Try again in ${rateLimitCheck.retryAfter} seconds.`,
-        code: 'RATE_LIMIT_EXCEEDED',
-        statusCode: 429,
-        timestamp: new Date().toISOString(),
-        details: { retryAfter: rateLimitCheck.retryAfter },
-      }, {
-        status: 429,
-        headers: { 'Retry-After': rateLimitCheck.retryAfter!.toString() }
-      });
+    // Check if user is authenticated (optional for this endpoint)
+    let userId: string | undefined;
+    try {
+      const { getCurrentUser } = await import('@/lib/auth');
+      const user = await getCurrentUser();
+      userId = user?.id;
+
+      // If authenticated, check usage limits
+      if (user) {
+        const { canPerformAnalysis, logUsage } = await import('@/lib/usage-limits');
+        const usageCheck = await canPerformAnalysis(user.id, user.tier as 'free' | 'pro' | 'agency');
+
+        if (!usageCheck.allowed) {
+          return NextResponse.json({
+            error: true,
+            message: usageCheck.reason || 'Usage limit exceeded',
+            code: 'USAGE_LIMIT_EXCEEDED',
+            statusCode: 403,
+            timestamp: new Date().toISOString(),
+            details: {
+              current: usageCheck.current,
+              limit: usageCheck.limit,
+              tier: user.tier,
+            },
+          }, { status: 403 });
+        }
+
+        // Log usage for authenticated users
+        await logUsage(user.id, 'analysis');
+      }
+    } catch (error) {
+      // Authentication is optional, so continue if it fails
+      console.log('Authentication check skipped (optional)');
+    }
+
+    // Check rate limit for non-authenticated users (simplified - in production use Redis or similar)
+    if (!userId) {
+      const clientIp = getClientIp(req);
+      const rateLimitCheck = checkRateLimit(clientIp);
+      if (!rateLimitCheck.allowed) {
+        return NextResponse.json({
+          error: true,
+          message: `Rate limit exceeded. Try again in ${rateLimitCheck.retryAfter} seconds.`,
+          code: 'RATE_LIMIT_EXCEEDED',
+          statusCode: 429,
+          timestamp: new Date().toISOString(),
+          details: { retryAfter: rateLimitCheck.retryAfter },
+        }, {
+          status: 429,
+          headers: { 'Retry-After': rateLimitCheck.retryAfter!.toString() }
+        });
+      }
     }
 
     // Check robots.txt for both URLs (in parallel if both provided)
