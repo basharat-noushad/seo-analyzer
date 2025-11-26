@@ -18,11 +18,6 @@ const customJestConfig = {
   // Test environment
   testEnvironment: 'jest-environment-jsdom',
 
-  // Module name mapper for path aliases
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
-  },
-
   // Coverage configuration
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
@@ -52,19 +47,6 @@ const customJestConfig = {
     '**/?(*.)+(spec|test).[jt]s?(x)',
   ],
 
-  // Transform files
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['@swc/jest', {
-      jsc: {
-        transform: {
-          react: {
-            runtime: 'automatic',
-          },
-        },
-      },
-    }],
-  },
-
   // Ignore patterns
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
@@ -77,6 +59,13 @@ const customJestConfig = {
 
   // Verbose output
   verbose: true,
+  transformIgnorePatterns: [
+    "/node_modules/(?!(@babel|next-auth|pretty-bytes|chalk|recharts|d3-shape|d3-path|d3-scale|d3-array|d3-time|d3-format|d3-interpolate|d3-color|internmap|@babel/runtime|react-is))"
+  ],
+  moduleNameMapper: {
+    '^recharts$': '<rootDir>/__mocks__/recharts.js',
+    '^@/(.*)$': '<rootDir>/$1',
+  },
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
