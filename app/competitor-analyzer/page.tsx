@@ -12,6 +12,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { LoadingSkeleton, LoadingProgress } from '@/components/LoadingSkeleton';
 import { useUrlValidation } from '@/hooks/useUrlValidation';
 import { StructuredData } from '@/components/StructuredData';
+import { LinkDistributionChart, TopKeywordsChart } from '@/components/DataVisualization';
 
 // ============================================================================
 // TYPES (matching API types)
@@ -775,7 +776,7 @@ export default function CompetitorAnalyzerPage() {
           />
           <FAQItem
             question="How accurate are the metrics?"
-            answer="The metrics are extracted directly from the HTML source code and are highly accurate for on-page elements. However, this tool does not execute JavaScript, so single-page applications (SPAs) may show incomplete data."
+            answer="The metrics are extracted from the fully rendered HTML source code and are highly accurate for on-page elements. This tool executes JavaScript, allowing for the analysis of single-page applications (SPAs)."
           />
         </div>
       </section>
@@ -1003,26 +1004,9 @@ function ContentTab({ data }: { data: ContentMetrics }) {
       </div>
 
       {/* Top Keywords */}
-      <div>
-        <h4 className="font-semibold text-gray-900 mb-3">Top Keywords</h4>
-        <div className="space-y-2">
-          {data.topKeywords.map((kw, idx) => (
-            <div key={idx} className="flex items-center">
-              <span className="text-sm font-medium text-gray-900 w-32">{kw.keyword}</span>
-              <div className="flex-1 mx-4">
-                <div className="bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-primary-500 h-2 rounded-full"
-                    style={{ width: `${Math.min(100, kw.density * 10)}%` }}
-                  ></div>
-                </div>
-              </div>
-              <span className="text-sm text-gray-600 w-20 text-right">
-                {kw.count} ({kw.density.toFixed(1)}%)
-              </span>
-            </div>
-          ))}
-        </div>
+      <div className="mt-6">
+          <h4 className="font-semibold text-gray-900 mb-3">Top Keywords</h4>
+          <TopKeywordsChart data={data.topKeywords} />
       </div>
     </div>
   );
@@ -1053,6 +1037,12 @@ function LinksTab({ data }: { data: LinkAnalysis }) {
           <div className="text-3xl font-bold text-gray-900">{data.nofollowPercentage}%</div>
           <div className="text-sm text-gray-600">Nofollow %</div>
         </div>
+      </div>
+
+      {/* Link Distribution Chart */}
+      <div className="mt-6">
+          <h4 className="font-semibold text-gray-900 mb-3">Link Distribution</h4>
+          <LinkDistributionChart data={{ internal: data.internal, external: data.external }} />
       </div>
 
       {/* Internal Links */}
