@@ -35,7 +35,7 @@ interface AdSlotProps {
 }
 
 // TODO: Replace with your actual AdSense publisher ID
-const PUBLISHER_ID = 'ca-pub-XXXXXXXXXXXX';
+const PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID || 'ca-pub-XXXXXXXXXXXX';
 
 /**
  * Default placeholder ad slot IDs

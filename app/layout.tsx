@@ -99,7 +99,7 @@ export default function RootLayout({
       <head>
         {/* Google AdSense Script */}
         {/* TODO: Replace with your actual publisher ID */}
-        <AdSenseScript publisherId="ca-pub-XXXXXXXXXXXX" />
+        <AdSenseScript publisherId={process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID || "ca-pub-XXXXXXXXXXXX"} />
       </head>
       <body className="min-h-screen bg-gray-50 antialiased">
         <Providers>
