@@ -14,6 +14,8 @@
  */
 
 export function StructuredData() {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://yourdomain.com';
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -21,7 +23,7 @@ export function StructuredData() {
     alternateName: 'SEO Page Analyzer',
     description:
       'Free SEO analysis tool to analyze and compare webpage on-page metrics including title tags, meta descriptions, headings, content analysis, link analysis, image optimization, and structured data detection. Get actionable SEO recommendations instantly.',
-    url: 'https://yourdomain.com/competitor-analyzer', // TODO: Replace with your actual URL
+    url: `${baseUrl}/competitor-analyzer`, // TODO: Replace with your actual URL
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web Browser',
     browserRequirements: 'Requires JavaScript. Works on Chrome, Firefox, Safari, Edge.',
@@ -35,12 +37,12 @@ export function StructuredData() {
     creator: {
       '@type': 'Organization',
       name: 'SEO Analyzer Pro', // TODO: Replace with your organization name
-      url: 'https://yourdomain.com', // TODO: Replace with your domain
+      url: baseUrl, // TODO: Replace with your domain
     },
     provider: {
       '@type': 'Organization',
       name: 'SEO Analyzer Pro',
-      url: 'https://yourdomain.com',
+      url: baseUrl,
     },
     featureList: [
       'SEO title tag analysis and optimization recommendations',
@@ -58,7 +60,7 @@ export function StructuredData() {
       'Open Graph and Twitter Card tag analysis',
       'Canonical URL verification',
     ],
-    screenshot: 'https://yourdomain.com/screenshot.png', // TODO: Add actual screenshot
+    screenshot: `${baseUrl}/screenshot.png`, // TODO: Add actual screenshot
     softwareVersion: '1.0',
     releaseNotes: 'Initial release with comprehensive on-page SEO analysis',
     // Optional: Add ratings if you have them
