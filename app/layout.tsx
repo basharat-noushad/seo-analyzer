@@ -14,7 +14,7 @@ import './globals.css';
 
 // Base URL for your application
 // TODO: Replace with your actual domain
-const baseUrl = 'https://yourdomain.com';
+const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://seo-analyzer-eta-umber.vercel.app').replace(/\/$/, '');
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
