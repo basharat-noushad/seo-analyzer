@@ -44,6 +44,7 @@ export const metadata: Metadata = {
   category: 'Technology',
 
   // Verification codes for search engines
+  // Configure these in your .env file
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
     yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
