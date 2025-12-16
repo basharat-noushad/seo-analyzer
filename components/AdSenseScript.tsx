@@ -24,7 +24,7 @@ interface AdSenseScriptProps {
    * Format: ca-pub-XXXXXXXXXXXX
    * Get this from your AdSense account
    */
-  publisherId: string;
+  publisherId?: string;
 }
 
 export function AdSenseScript({ publisherId }: AdSenseScriptProps) {
@@ -45,7 +45,7 @@ export function AdSenseScript({ publisherId }: AdSenseScriptProps) {
   }
 
   // Validate publisher ID format
-  if (!publisherId.startsWith('ca-pub-')) {
+  if (!publisherId || !publisherId.startsWith('ca-pub-')) {
     console.error('[AdSense] Invalid publisher ID format. Should start with "ca-pub-"');
     return null;
   }
