@@ -27,6 +27,7 @@ export async function middleware(req: NextRequest) {
     "/privacy",
     "/terms",
     "/contact",
+    "/tools/page-analyzer",
   ]
 
   const isPublicRoute = publicRoutes.some((route) => path === route) ||

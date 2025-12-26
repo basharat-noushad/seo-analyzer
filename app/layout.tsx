@@ -43,11 +43,12 @@ export const metadata: Metadata = {
   category: 'Technology',
 
   // Verification codes for search engines
-  // TODO: Add your verification codes
   verification: {
-    google: 'your-google-site-verification-code',
-    // yandex: 'your-yandex-verification-code',
-    // bing: 'your-bing-verification-code',
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
+    other: {
+      'msvalidate.01': process.env.NEXT_PUBLIC_BING_VERIFICATION || '',
+    },
   },
 
   // Icons

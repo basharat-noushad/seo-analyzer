@@ -37,11 +37,11 @@ export const metadata: Metadata = {
     title: 'Competitor Page Analyzer - Free SEO Analysis Tool',
     description:
       'Analyze any webpage for SEO metrics. Compare competitor pages and get actionable insights to improve your SEO performance.',
-    url: 'https://yourdomain.com/competitor-analyzer', // TODO: Replace with your actual URL
+    url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seo-analyzer-eta-umber.vercel.app'}/competitor-analyzer`.replace(/([^:]\/)\/+/g, '$1'),
     siteName: 'SEO Analyzer Pro',
     images: [
       {
-        url: 'https://yourdomain.com/og-image-analyzer.png', // TODO: Create and add actual image
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seo-analyzer-eta-umber.vercel.app'}/og-image-analyzer.png`.replace(/([^:]\/)\/+/g, '$1'), // TODO: Create and add actual image
         width: 1200,
         height: 630,
         alt: 'Competitor Page Analyzer - SEO Tool Screenshot',
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
 
   // Canonical URL
   alternates: {
-    canonical: 'https://yourdomain.com/competitor-analyzer', // TODO: Replace with your actual URL
+    canonical: `${process.env.NEXT_PUBLIC_APP_URL || 'https://seo-analyzer-eta-umber.vercel.app'}/competitor-analyzer`.replace(/([^:]\/)\/+/g, '$1'),
   },
 
   // Additional metadata
