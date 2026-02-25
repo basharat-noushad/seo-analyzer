@@ -33,8 +33,9 @@ export const dynamic = 'force-dynamic'
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const user = await getCurrentUser()
 
   if (!user) {
@@ -43,7 +44,7 @@ export default async function ProjectDetailPage({
 
   const project = await prisma.project.findFirst({
     where: {
-      id: params.id,
+      id,
       userId: user.id,
     },
     include: {
