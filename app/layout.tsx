@@ -12,10 +12,8 @@ import { AdSenseScript } from '@/components/AdSenseScript';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
-// Base URL for your application
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-  ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  : 'https://seo-analyzer-eta-umber.vercel.app';
+// Base URL for your application - configured from environment
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -98,8 +96,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Google AdSense Script */}
-        {/* TODO: Replace with your actual publisher ID */}
+        {/* Google AdSense Script - configured via NEXT_PUBLIC_ADSENSE_PUBLISHER_ID env var */}
         <AdSenseScript publisherId={process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID || "ca-pub-XXXXXXXXXXXX"} />
       </head>
       <body className="min-h-screen bg-gray-50 antialiased">
