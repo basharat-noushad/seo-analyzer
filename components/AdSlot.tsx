@@ -34,7 +34,9 @@ interface AdSlotProps {
   className?: string;
 }
 
-const PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID;
+// Read publisher ID from environment variable
+// Set NEXT_PUBLIC_ADSENSE_PUBLISHER_ID in your .env file
+const PUBLISHER_ID = process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID || 'ca-pub-XXXXXXXXXXXX';
 
 /**
  * Default placeholder ad slot IDs
