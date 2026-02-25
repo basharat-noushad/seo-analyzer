@@ -12,8 +12,8 @@ import { AdSenseScript } from '@/components/AdSenseScript';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
-// Base URL for your application
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seo-analyzer-eta-umber.vercel.app';
+// Base URL for your application - configured from environment
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -43,6 +43,7 @@ export const metadata: Metadata = {
   category: 'Technology',
 
   // Verification codes for search engines
+  // Configure these in your .env file
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
     yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
@@ -96,8 +97,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Google AdSense Script */}
-        {/* TODO: Replace with your actual publisher ID */}
+        {/* Google AdSense Script - configured via NEXT_PUBLIC_ADSENSE_PUBLISHER_ID env var */}
         <AdSenseScript publisherId={process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID || "ca-pub-XXXXXXXXXXXX"} />
       </head>
       <body className="min-h-screen bg-gray-50 antialiased">

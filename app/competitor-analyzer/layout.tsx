@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     title: 'Competitor Page Analyzer - Free SEO Analysis Tool',
     description:
       'Analyze any webpage for SEO metrics. Compare competitor pages and get actionable insights instantly.',
-    images: ['https://yourdomain.com/twitter-image-analyzer.png'], // TODO: Create and add actual image
+    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'https://seo-analyzer-eta-umber.vercel.app'}/twitter-image-analyzer.png`.replace(/([^:]\/)\/+/g, '$1')], // TODO: Create and add actual image
     creator: '@yourtwitterhandle', // TODO: Replace with your Twitter handle
     site: '@yourtwitterhandle',
   },
