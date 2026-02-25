@@ -14,7 +14,8 @@
  */
 
 export function StructuredData() {
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://seo-analyzer-eta-umber.vercel.app').replace(/\/$/, '');
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://seo-analyzer-eta-umber.vercel.app';
+  const cleanUrl = (url: string) => url.replace(/([^:]\/)\/+/g, '$1');
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -23,7 +24,7 @@ export function StructuredData() {
     alternateName: 'SEO Page Analyzer',
     description:
       'Free SEO analysis tool to analyze and compare webpage on-page metrics including title tags, meta descriptions, headings, content analysis, link analysis, image optimization, and structured data detection. Get actionable SEO recommendations instantly.',
-    url: `${baseUrl}/competitor-analyzer`,
+    url: cleanUrl(`${baseUrl}/competitor-analyzer`),
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web Browser',
     browserRequirements: 'Requires JavaScript. Works on Chrome, Firefox, Safari, Edge.',
@@ -37,12 +38,12 @@ export function StructuredData() {
     creator: {
       '@type': 'Organization',
       name: 'SEO Analyzer Pro',
-      url: baseUrl,
+      url: cleanUrl(baseUrl),
     },
     provider: {
       '@type': 'Organization',
       name: 'SEO Analyzer Pro',
-      url: baseUrl,
+      url: cleanUrl(baseUrl),
     },
     featureList: [
       'SEO title tag analysis and optimization recommendations',
@@ -60,7 +61,7 @@ export function StructuredData() {
       'Open Graph and Twitter Card tag analysis',
       'Canonical URL verification',
     ],
-    screenshot: `${baseUrl}/screenshot.png`, // TODO: Add actual screenshot
+    screenshot: cleanUrl(`${baseUrl}/screenshot.png`), // TODO: Add actual screenshot
     softwareVersion: '1.0',
     releaseNotes: 'Initial release with comprehensive on-page SEO analysis',
     // Optional: Add ratings if you have them
