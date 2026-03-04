@@ -44,8 +44,10 @@ export const authConfig = {
           throw new Error("Invalid email or password")
         }
 
-        // Email verification check removed - auto-verify on signup for now
-        // TODO: Implement proper email verification system
+        // Email verification check
+        if (!user.emailVerified) {
+          throw new Error("Please verify your email before signing in. Check your inbox for the verification link.")
+        }
 
         return {
           id: user.id,

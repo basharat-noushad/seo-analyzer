@@ -147,6 +147,13 @@ export async function POST(req: NextRequest) {
       return createApiError("Rate limit exceeded", 429)
     }
 
+    // Check usage limits
+    const { checkUsageLimit } = await import("@/lib/usage-limits")
+    const usageCheck = await checkUsageLimit(context.userId, "run_analysis")
+    if (!usageCheck.allowed) {
+      return createApiError(usageCheck.message || "Usage limit reached", 403)
+    }
+
     const body = await req.json()
     const { url, projectId, type = "page" } = body
 
@@ -186,8 +193,10 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // TODO: Trigger actual analysis job (queue system, background worker, etc.)
-    // For now, the analysis is created with "pending" status
+    // Trigger background analysis processing
+    import("@/lib/analysis-processor")
+      .then(({ processAnalysis }) => processAnalysis(analysis.id))
+      .catch((err) => console.error("Analysis processing error:", err))
 
     const responseTime = Date.now() - startTime
     await logApiUsage({

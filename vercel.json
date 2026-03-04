@@ -62,6 +62,12 @@
       "destination": "/api/v1/:path*"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/cron/monitoring",
+      "schedule": "0 */6 * * *"
+    }
+  ],
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1"
   }

@@ -205,15 +205,19 @@ export async function POST(
       },
     })
 
-    // TODO: Send invitation email
-    // In production, integrate with email service (SendGrid, AWS SES, etc.)
-    // const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invitations/${token}`
-    // await sendInvitationEmail(email, invitation.team.name, inviteUrl)
+    // Send invitation email
+    try {
+      const { sendTeamInvitationEmail } = await import("@/lib/email")
+      const inviteUrl = `${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL}/invitations/${token}`
+      await sendTeamInvitationEmail(email, session.user.name || "A team member", invitation.team.name, inviteUrl)
+    } catch (emailError) {
+      console.error("Failed to send invitation email:", emailError)
+    }
 
     return NextResponse.json(
       {
         invitation,
-        message: "Invitation created. In production, an email would be sent.",
+        message: "Invitation created and email sent.",
       },
       { status: 201 }
     )

@@ -89,6 +89,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Check usage limits
+    const { checkUsageLimit } = await import("@/lib/usage-limits")
+    const usageCheck = await checkUsageLimit(user.id, "add_keyword")
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        { error: usageCheck.message, code: "TIER_LIMIT_REACHED" },
+        { status: 403 }
+      )
+    }
+
     // Check if keyword already exists for this project
     const existingKeyword = await prisma.keyword.findFirst({
       where: {

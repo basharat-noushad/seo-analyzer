@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
       })
 
       if (alert && alert.userId === session.user.id) {
-        // Simulate sending email
-        await simulateEmailSend(user.email, alert)
+        // Send alert email
+        await sendAlertEmail(user.email, alert)
 
         // Mark alert as email sent
         await prisma.alert.update({
@@ -60,9 +60,9 @@ export async function POST(req: NextRequest) {
         include: { project: true },
       })
 
-      // Simulate sending emails
+      // Send alert emails
       for (const alert of alerts) {
-        await simulateEmailSend(user.email, alert)
+        await sendAlertEmail(user.email, alert)
       }
 
       // Mark alerts as email sent
@@ -91,37 +91,22 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Simulate email sending
- * In production, this would use a service like Resend:
- *
- * import { Resend } from 'resend'
- * const resend = new Resend(process.env.RESEND_API_KEY)
- *
- * await resend.emails.send({
- *   from: 'SEO Analyzer <alerts@seoanalyzer.com>',
- *   to: userEmail,
- *   subject: alert.title,
- *   html: emailTemplate(alert),
- * })
+ * Send alert notification email using the centralized email service
  */
-async function simulateEmailSend(userEmail: string, alert: any) {
-  // Log email event (in production, this would actually send an email)
-  console.log(`[EMAIL SIMULATION] Sending to: ${userEmail}`)
-  console.log(`Subject: ${alert.title}`)
-  console.log(`Severity: ${alert.severity}`)
-  console.log(`Message: ${alert.message}`)
-  if (alert.project) {
-    console.log(`Project: ${alert.project.name}`)
+async function sendAlertEmail(userEmail: string, alert: any) {
+  try {
+    const { sendAlertNotificationEmail } = await import("@/lib/email")
+    await sendAlertNotificationEmail(userEmail, "", [
+      {
+        title: alert.title,
+        severity: alert.severity,
+        message: alert.message,
+        projectName: alert.project?.name,
+      },
+    ])
+  } catch (error) {
+    console.error("Failed to send alert email:", error)
   }
-  console.log("---")
-
-  // In production, you would:
-  // 1. Generate HTML email template
-  // 2. Call email service API (Resend, SendGrid, etc.)
-  // 3. Handle success/failure
-  // 4. Log the event
-
-  return true
 }
 
 /**
