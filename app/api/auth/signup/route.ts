@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 import { prisma } from "@/lib/db"
 
 // Force dynamic rendering
@@ -51,8 +52,7 @@ export async function POST(req: NextRequest) {
         name,
         email,
         passwordHash,
-        emailVerified: true, // Auto-verify for now (TODO: implement email verification)
-        emailVerifiedAt: new Date(),
+        emailVerified: false,
         role: "user",
         tier: "free",
       },
@@ -65,11 +65,32 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex")
+    const hashedToken = crypto.createHash("sha256").update(verificationToken).digest("hex")
+
+    await prisma.verificationToken.create({
+      data: {
+        identifier: `email_verify:${email}`,
+        token: hashedToken,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      },
+    })
+
+    // Send verification email
+    try {
+      const { sendVerificationEmail } = await import("@/lib/email")
+      const verificationUrl = `${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${verificationToken}`
+      await sendVerificationEmail(email, name, verificationUrl)
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError)
+    }
+
     return NextResponse.json(
       {
         success: true,
         user,
-        message: "Account created successfully",
+        message: "Account created. Please check your email to verify your account.",
       },
       { status: 201 }
     )

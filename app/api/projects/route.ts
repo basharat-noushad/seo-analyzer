@@ -9,13 +9,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireApiAuth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
-// Tier limits for projects
-const TIER_LIMITS = {
-  free: 1,
-  pro: 10,
-  agency: Infinity,
-}
-
 export async function GET(req: NextRequest) {
   try {
     const user = await requireApiAuth()
@@ -59,20 +52,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check tier limits
-    const projectCount = await prisma.project.count({
-      where: { userId: user.id },
-    })
-
-    const limit = TIER_LIMITS[user.tier as keyof typeof TIER_LIMITS] || 1
-
-    if (projectCount >= limit) {
+    // Check tier limits using centralized usage limits
+    const { checkUsageLimit } = await import("@/lib/usage-limits")
+    const usageCheck = await checkUsageLimit(user.id, "create_project")
+    if (!usageCheck.allowed) {
       return NextResponse.json(
         {
-          error: `Project limit reached for ${user.tier} tier. Please upgrade to create more projects.`,
+          error: usageCheck.message,
           code: "TIER_LIMIT_REACHED",
-          currentCount: projectCount,
-          limit,
+          currentCount: usageCheck.current,
+          limit: usageCheck.limit,
         },
         { status: 403 }
       )

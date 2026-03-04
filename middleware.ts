@@ -39,7 +39,9 @@ export async function middleware(req: NextRequest) {
     path.startsWith("/api/analyze") ||
     path.startsWith("/api/health") ||
     path.startsWith("/api/env-check") ||
-    path.startsWith("/tools/free-page-analyzer")
+    path.startsWith("/tools/free-page-analyzer") ||
+    path.startsWith("/api/stripe/webhook") ||
+    path.startsWith("/api/cron/")
 
   if (isPublicRoute) {
     return NextResponse.next()

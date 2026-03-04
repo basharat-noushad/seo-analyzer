@@ -26,9 +26,12 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     try {
-      // TODO: Implement password reset email in Phase 4 (Monitoring & Alerts)
-      // For now, just show success message
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) throw new Error("Failed to send")
       setSubmitted(true)
     } catch (error) {
       setError("Failed to send reset email. Please try again.")
@@ -98,14 +101,7 @@ export default function ForgotPasswordPage() {
             </div>
           )}
 
-          <div className="p-3 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="font-medium">Note:</p>
-            <p className="mt-1">
-              Email functionality will be added in Phase 4. For now, please contact support for password resets.
-            </p>
-          </div>
-
-          <Button type="submit" className="w-full" disabled={loading}>
+<Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Sending..." : "Send Reset Link"}
           </Button>
         </form>

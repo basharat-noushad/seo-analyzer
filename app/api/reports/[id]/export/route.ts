@@ -4,12 +4,7 @@ import { prisma } from "@/lib/prisma"
 
 /**
  * POST /api/reports/[id]/export
- * Export report as PDF (simulated)
- *
- * In production, this would use a library like:
- * - jsPDF + html2canvas for client-side
- * - Puppeteer/Playwright for server-side
- * - PDF generation services (PDFShift, DocRaptor, etc.)
+ * Export report as PDF using Puppeteer, with HTML fallback.
  */
 export async function POST(
   req: NextRequest,
@@ -21,10 +16,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { searchParams } = new URL(req.url)
-    const format = searchParams.get("format") || "pdf"
-
-    // Get report and verify ownership
+    // Get report with related data
     const report = await prisma.report.findUnique({
       where: { id: params.id },
       include: {
@@ -34,6 +26,7 @@ export async function POST(
             name: true,
             domain: true,
             userId: true,
+            seoScore: true,
           },
         },
       },
@@ -47,22 +40,68 @@ export async function POST(
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    // Simulate PDF generation
-    const exportUrl = await generatePDFExport(report, format)
-
-    // Update report with PDF URL
-    await prisma.report.update({
-      where: { id: params.id },
-      data: {
-        pdfUrl: exportUrl,
-      },
+    // Get user tier for white-label check
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { tier: true },
     })
 
-    return NextResponse.json({
-      message: "Export generated successfully",
-      format,
-      url: exportUrl,
-      downloadUrl: `/api/reports/${params.id}/download`,
+    // Get issues for the report
+    const issues = await prisma.issue.findMany({
+      where: { projectId: report.projectId },
+      orderBy: { severity: "asc" },
+      take: 100,
+    })
+
+    // Generate HTML report
+    const { generateReportHTML } = await import("@/lib/report-templates")
+    const reportData = {
+      name: report.name,
+      url: report.project.domain,
+      score: report.project.seoScore || 0,
+      date: report.createdAt.toISOString(),
+      issues: issues.map((issue) => ({
+        category: issue.category,
+        severity: issue.severity,
+        title: issue.title,
+        description: issue.description || "",
+        recommendation: issue.recommendation || "",
+      })),
+      whiteLabel: user?.tier === "agency" ? { companyName: "Agency Report" } : undefined,
+    }
+
+    const html = generateReportHTML(reportData)
+
+    // Try Puppeteer for real PDF generation
+    let pdfBuffer: Buffer
+    try {
+      const puppeteer = await import("puppeteer")
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      })
+      const page = await browser.newPage()
+      await page.setContent(html, { waitUntil: "networkidle0" })
+      const pdf = await page.pdf({ format: "A4", printBackground: true })
+      await browser.close()
+      pdfBuffer = Buffer.from(pdf)
+    } catch (puppeteerError) {
+      console.error("Puppeteer PDF generation failed, returning HTML:", puppeteerError)
+      // Fallback: return the HTML report directly
+      return new Response(html, {
+        headers: {
+          "Content-Type": "text/html",
+          "Content-Disposition": `attachment; filename="${report.name}.html"`,
+        },
+      })
+    }
+
+    return new Response(new Uint8Array(pdfBuffer), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${report.name}.pdf"`,
+        "Content-Length": pdfBuffer.length.toString(),
+      },
     })
   } catch (error: any) {
     console.error("Error exporting report:", error)
@@ -74,49 +113,8 @@ export async function POST(
 }
 
 /**
- * Simulate PDF generation
- *
- * In production, this would:
- * 1. Generate HTML from report template
- * 2. Convert HTML to PDF using Puppeteer or similar
- * 3. Upload PDF to S3/Cloud Storage
- * 4. Return the public URL
- *
- * Example with Puppeteer:
- * ```
- * import puppeteer from 'puppeteer'
- *
- * const browser = await puppeteer.launch()
- * const page = await browser.newPage()
- * await page.setContent(reportHTML)
- * const pdf = await page.pdf({ format: 'A4' })
- * await browser.close()
- *
- * // Upload to S3
- * const s3Url = await uploadToS3(pdf, `reports/${reportId}.pdf`)
- * return s3Url
- * ```
- */
-async function generatePDFExport(report: any, format: string): Promise<string> {
-  // Simulate PDF generation delay
-  console.log(`[PDF EXPORT] Generating ${format} for report: ${report.name}`)
-  console.log(`Project: ${report.project.name}`)
-  console.log(`Type: ${report.type}`)
-
-  // In production, this would be a real URL like:
-  // https://yourdomain.com/storage/reports/abc123.pdf
-  // or https://s3.amazonaws.com/bucket/reports/abc123.pdf
-
-  const simulatedUrl = `/exports/reports/${report.id}.${format}`
-
-  console.log(`[PDF EXPORT] Generated: ${simulatedUrl}`)
-
-  return simulatedUrl
-}
-
-/**
- * GET /api/reports/[id]/download
- * Download the generated PDF
+ * GET /api/reports/[id]/export
+ * Download the generated report
  */
 export async function GET(
   req: NextRequest,
@@ -132,9 +130,7 @@ export async function GET(
       where: { id: params.id },
       include: {
         project: {
-          select: {
-            userId: true,
-          },
+          select: { userId: true },
         },
       },
     })
@@ -154,21 +150,7 @@ export async function GET(
       )
     }
 
-    // In production, this would:
-    // 1. Fetch the PDF from storage
-    // 2. Return it with proper headers for download
-    //
-    // Example:
-    // const pdfBuffer = await fetchFromS3(report.pdfUrl)
-    // return new Response(pdfBuffer, {
-    //   headers: {
-    //     'Content-Type': 'application/pdf',
-    //     'Content-Disposition': `attachment; filename="${report.name}.pdf"`,
-    //   },
-    // })
-
     return NextResponse.json({
-      message: "In production, this would download the PDF",
       pdfUrl: report.pdfUrl,
       reportName: report.name,
     })

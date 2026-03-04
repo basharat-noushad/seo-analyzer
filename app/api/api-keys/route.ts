@@ -60,6 +60,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Check API access tier
+    const { checkUsageLimit } = await import("@/lib/usage-limits")
+    const usageCheck = await checkUsageLimit(session.user.id, "use_api")
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        { error: usageCheck.message, code: "TIER_LIMIT_REACHED" },
+        { status: 403 }
+      )
+    }
+
     // Generate a secure API key
     // Format: sk_live_<32-char-random>
     const randomPart = nanoid(32)

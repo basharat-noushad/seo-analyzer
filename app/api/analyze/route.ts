@@ -282,20 +282,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check rate limit (simplified - in production use Redis or similar)
+    // Check rate limit using Redis (with in-memory fallback)
     const clientIp = getClientIp(req);
-    const rateLimitCheck = checkRateLimit(clientIp);
-    if (!rateLimitCheck.allowed) {
+    const { checkRateLimit: checkLimit } = await import("@/lib/rate-limit");
+    const rateLimitCheck = await checkLimit(clientIp, 10, 3600);
+    if (!rateLimitCheck.success) {
       return NextResponse.json({
         error: true,
-        message: `Rate limit exceeded. Try again in ${rateLimitCheck.retryAfter} seconds.`,
+        message: `Rate limit exceeded. Try again later.`,
         code: 'RATE_LIMIT_EXCEEDED',
         statusCode: 429,
         timestamp: new Date().toISOString(),
-        details: { retryAfter: rateLimitCheck.retryAfter },
+        details: { remaining: rateLimitCheck.remaining, reset: rateLimitCheck.reset },
       }, {
         status: 429,
-        headers: { 'Retry-After': rateLimitCheck.retryAfter!.toString() }
+        headers: { 'Retry-After': rateLimitCheck.reset.toString() }
       });
     }
 
@@ -427,38 +428,6 @@ function validateUrl(url: string): { valid: boolean; error?: string } {
   } catch (error) {
     return { valid: false, error: 'Invalid URL format' };
   }
-}
-
-// ============================================================================
-// RATE LIMITING (In-memory - use Redis in production)
-// ============================================================================
-
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-function checkRateLimit(clientIp: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const maxRequests = 10;
-  const windowMs = 60 * 60 * 1000; // 1 hour
-
-  const entry = rateLimitStore.get(clientIp);
-
-  if (!entry || now > entry.resetTime) {
-    // First request or window expired
-    rateLimitStore.set(clientIp, {
-      count: 1,
-      resetTime: now + windowMs,
-    });
-    return { allowed: true };
-  }
-
-  if (entry.count >= maxRequests) {
-    const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
-    return { allowed: false, retryAfter };
-  }
-
-  entry.count += 1;
-  rateLimitStore.set(clientIp, entry);
-  return { allowed: true };
 }
 
 function getClientIp(req: NextRequest): string {
