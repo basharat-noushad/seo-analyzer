@@ -10,7 +10,7 @@
 
 import { useState, Suspense } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,15 +18,23 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  // Get error from URL (if redirected from auth error)
+  // Get messages from URL params
   const urlError = searchParams.get("error")
+  const verified = searchParams.get("verified")
+  const signupSuccess = searchParams.get("signup")
+
+  const getFriendlyError = (code: string) => {
+    if (code === "CredentialsSignin") return "Invalid email or password. If you just signed up, please verify your email first."
+    if (code === "invalid_token") return "Verification link is invalid or expired. Please sign in to request a new one."
+    if (code === "configuration") return "Server configuration error. Please contact support."
+    return code
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,33 +42,20 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      console.log("Attempting login for:", email)
-
-      // Clear any existing session data before login
-      localStorage.clear()
-      sessionStorage.clear()
-
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       })
 
-      console.log("Login result:", result)
-
       if (result?.error) {
-        console.error("Login error:", result.error)
-        setError(result.error || "Invalid email or password")
+        setError(getFriendlyError(result.error))
       } else if (result?.ok) {
-        console.log("Login successful, redirecting to dashboard...")
-        // Use hard redirect to ensure session is properly loaded
         window.location.href = "/dashboard"
       } else {
-        console.error("Unexpected login response:", result)
         setError("Login failed. Please try again.")
       }
     } catch (error) {
-      console.error("Login exception:", error)
       setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
@@ -124,9 +119,15 @@ function LoginForm() {
             />
           </div>
 
+          {(verified || signupSuccess === "success") && (
+            <div className="p-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md">
+              {verified ? "Email verified! You can now sign in." : "Account created! Please sign in."}
+            </div>
+          )}
+
           {(error || urlError) && (
             <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
-              {error || urlError}
+              {error || (urlError ? getFriendlyError(urlError) : "")}
             </div>
           )}
 

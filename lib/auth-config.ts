@@ -44,8 +44,8 @@ export const authConfig = {
           throw new Error("Invalid email or password")
         }
 
-        // Email verification check
-        if (!user.emailVerified) {
+        // Email verification check (only enforced when REQUIRE_EMAIL_VERIFICATION=true)
+        if (process.env.REQUIRE_EMAIL_VERIFICATION === 'true' && !user.emailVerified) {
           throw new Error("Please verify your email before signing in. Check your inbox for the verification link.")
         }
 

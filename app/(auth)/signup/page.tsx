@@ -10,7 +10,6 @@
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,13 +17,14 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function SignUpPage() {
-  const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [verificationSent, setVerificationSent] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,27 +59,18 @@ export default function SignUpPage() {
         return
       }
 
-      console.log("Signup successful, attempting auto-login...")
-
-      // Auto sign in after successful signup
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      })
-
-      console.log("SignIn result:", result)
-
-      if (result?.error) {
-        console.error("Auto-login failed:", result.error)
-        setError("Account created but failed to sign in. Please try logging in.")
-      } else if (result?.ok) {
-        console.log("Login successful, redirecting to dashboard...")
-        // Use hard redirect to ensure session is properly loaded
-        window.location.href = "/dashboard"
+      if (data.requiresVerification) {
+        // Show email verification pending message
+        setRegisteredEmail(email)
+        setVerificationSent(true)
       } else {
-        console.error("Unexpected signIn response:", result)
-        setError("Account created. Please try logging in manually.")
+        // Auto sign in — email verification not required
+        const result = await signIn("credentials", { email, password, redirect: false })
+        if (result?.ok) {
+          window.location.href = "/dashboard"
+        } else {
+          window.location.href = "/login?signup=success"
+        }
       }
     } catch (error) {
       setError("Something went wrong. Please try again.")
@@ -98,6 +89,36 @@ export default function SignUpPage() {
       setError("Failed to sign up with Google")
       setLoading(false)
     }
+  }
+
+  if (verificationSent) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Check your email</CardTitle>
+          <CardDescription>
+            We sent a verification link to <strong>{registeredEmail}</strong>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Click the link in the email to verify your account, then you can sign in.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Didn&apos;t receive it? Check your spam folder or{" "}
+            <Link href="/login" className="text-primary hover:underline font-medium">
+              try signing in
+            </Link>{" "}
+            and we&apos;ll resend it.
+          </p>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Link href="/login" className="text-sm text-primary hover:underline font-medium">
+            Back to sign in
+          </Link>
+        </CardFooter>
+      </Card>
+    )
   }
 
   return (
