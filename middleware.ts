@@ -62,9 +62,13 @@ export async function middleware(req: NextRequest) {
     }
 
     // Use getToken for Edge-compatible auth checking
+    // NextAuth v5 changed the cookie name from "next-auth.session-token" to "authjs.session-token"
+    const isSecure = process.env.NODE_ENV === 'production'
+    const cookieName = isSecure ? '__Secure-authjs.session-token' : 'authjs.session-token'
     const token = await getToken({
       req,
-      secret: process.env.NEXTAUTH_SECRET
+      secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+      cookieName,
     })
 
     // Debug logging
