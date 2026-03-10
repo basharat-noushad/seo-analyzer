@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * PATCH /api/monitoring/[id]
@@ -71,7 +71,7 @@ export async function PATCH(
     })
 
     return NextResponse.json({ monitoringJob: updated })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating monitoring job:", error)
     return NextResponse.json(
       { error: "Failed to update monitoring job" },
@@ -140,7 +140,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting monitoring job:", error)
     return NextResponse.json(
       { error: "Failed to delete monitoring job" },

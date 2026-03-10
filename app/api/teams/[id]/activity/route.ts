@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/teams/[id]/activity
@@ -39,7 +40,7 @@ export async function GET(
     const offset = parseInt(searchParams.get("offset") || "0")
     const action = searchParams.get("action")
 
-    const where: any = { teamId: params.id }
+    const where: Prisma.ActivityLogWhereInput = { teamId: params.id }
     if (action) {
       where.action = action
     }

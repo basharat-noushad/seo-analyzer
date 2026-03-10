@@ -31,9 +31,9 @@ export async function POST() {
       success: true,
       message: 'Session cleared successfully'
     })
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json({
-      error: error.message
+      error: error instanceof Error ? error.message : 'Failed to clear session'
     }, { status: 500 })
   }
 }

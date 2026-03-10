@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * POST /api/alerts/mark-all-read
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       message: `${result.count} alert(s) marked as read`,
       count: result.count,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error marking alerts as read:", error)
     return NextResponse.json(
       { error: "Failed to mark alerts as read" },

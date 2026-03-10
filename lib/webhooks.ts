@@ -3,7 +3,7 @@
  * Triggers and delivers webhook events to registered endpoints
  */
 
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 import crypto from "crypto"
 
 export type WebhookEvent =
@@ -66,10 +66,10 @@ async function deliverWebhook(
       statusCode: response.status,
       response: responseText.substring(0, 1000), // Limit response storage
     }
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
-      error: error.message || "Failed to deliver webhook",
+      error: error instanceof Error ? error.message : "Failed to deliver webhook",
     }
   }
 }
@@ -225,9 +225,9 @@ export async function retryWebhookDelivery(deliveryId: string) {
     })
 
     return result
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error retrying webhook delivery:", error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : "Retry failed" }
   }
 }
 

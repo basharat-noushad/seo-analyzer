@@ -3,7 +3,7 @@
  * Defines permissions and helper functions for team collaboration
  */
 
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 export type TeamRole = "owner" | "admin" | "member" | "viewer"
 

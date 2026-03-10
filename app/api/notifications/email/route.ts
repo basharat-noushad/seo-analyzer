@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * POST /api/notifications/email
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       message: `Email notification(s) sent successfully`,
       count: updatedCount,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error sending email notification:", error)
     return NextResponse.json(
       { error: "Failed to send email notification" },
@@ -158,7 +158,7 @@ export async function GET(req: NextRequest) {
         last30Days: recentEmails,
       },
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching email stats:", error)
     return NextResponse.json(
       { error: "Failed to fetch email statistics" },

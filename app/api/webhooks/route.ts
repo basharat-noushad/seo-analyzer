@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 import { nanoid } from "nanoid"
 import crypto from "crypto"
 
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const projectId = searchParams.get("projectId")
 
-    const where: any = { userId: session.user.id }
+    const where: Prisma.WebhookWhereInput = { userId: session.user.id }
     if (projectId) where.projectId = projectId
 
     const webhooks = await prisma.webhook.findMany({

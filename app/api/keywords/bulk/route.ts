@@ -9,8 +9,10 @@ import { requireApiAuth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 export async function POST(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { keywords } = await req.json()
 
     if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
@@ -100,17 +102,6 @@ export async function POST(req: NextRequest) {
     )
   } catch (error) {
     console.error("Error saving keywords:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to save keywords" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to save keywords" }, { status: 500 })
   }
 }

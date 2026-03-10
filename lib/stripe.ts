@@ -329,7 +329,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
 
   if (!customerId) return;
 
-  const user = await prisma.user.findFirst({
+  const user = await prisma.user.findUnique({
     where: { stripeCustomerId: customerId },
   });
 
@@ -354,7 +354,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
 
   if (!customerId) return;
 
-  const sub = (invoice as any).subscription;
+  const sub = (invoice as any).subscription as string | { id: string } | null | undefined;
   const subscriptionId =
     typeof sub === "string"
       ? sub
@@ -362,7 +362,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
 
   if (!subscriptionId || !stripe) return;
 
-  const user = await prisma.user.findFirst({
+  const user = await prisma.user.findUnique({
     where: { stripeCustomerId: customerId },
   });
 

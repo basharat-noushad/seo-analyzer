@@ -3,7 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -500,6 +499,7 @@ model ApiUsageLog {
 
   @@index([apiKeyId])
   @@index([createdAt])
+  @@index([apiKeyId, createdAt])
   @@map("api_usage_logs")
 }
 
@@ -571,5 +571,6 @@ model UsageLog {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([userId, action, createdAt])
   @@map("usage_logs")
 }

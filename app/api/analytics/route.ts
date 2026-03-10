@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 export const dynamic = 'force-dynamic'
 
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     const analyticsData = await generateAnalyticsData(project, days)
 
     return NextResponse.json(analyticsData)
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching analytics:", error)
     return NextResponse.json(
       { error: "Failed to fetch analytics" },

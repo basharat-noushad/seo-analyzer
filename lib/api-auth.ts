@@ -4,13 +4,16 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 import crypto from "crypto"
+import { apiError, apiSuccess } from "@/lib/api-response"
+
+export type ApiPermissions = Record<string, ('read' | 'write')[]>
 
 export interface ApiContext {
   userId: string
   apiKeyId: string
-  permissions: any
+  permissions: ApiPermissions | null
 }
 
 /**
@@ -71,7 +74,7 @@ export async function authenticateApiRequest(
       where: { id: apiKeyRecord.id },
       data: { lastUsedAt: new Date() },
     })
-    .catch((error: any) => console.error("Failed to update lastUsedAt:", error))
+    .catch((error: Error) => console.error("Failed to update lastUsedAt:", error.message))
 
   // Return authentication context
   return {
@@ -79,7 +82,7 @@ export async function authenticateApiRequest(
     context: {
       userId: apiKeyRecord.userId,
       apiKeyId: apiKeyRecord.id,
-      permissions: apiKeyRecord.permissions,
+      permissions: apiKeyRecord.permissions as ApiPermissions | null,
     },
   }
 }
@@ -150,41 +153,23 @@ export function hasApiPermission(
   resource: string,
   action: "read" | "write"
 ): boolean {
-  // If no permissions specified, allow all
-  if (!context.permissions) {
-    return true
-  }
-
-  const permissions = context.permissions as Record<string, string[]>
-
-  // Check if resource exists and has the required action
-  return permissions[resource]?.includes(action) || false
+  // No permissions object means full access
+  if (!context.permissions) return true
+  return context.permissions[resource]?.includes(action) ?? false
 }
 
 /**
  * Helper to create authenticated API response with error
  */
 export function createApiError(message: string, status: number = 400) {
-  return NextResponse.json(
-    {
-      error: message,
-      timestamp: new Date().toISOString(),
-    },
-    { status }
-  )
+  return apiError(message, status)
 }
 
 /**
  * Helper to create successful API response
  */
-export function createApiResponse(data: any, status: number = 200) {
-  return NextResponse.json(
-    {
-      ...data,
-      timestamp: new Date().toISOString(),
-    },
-    { status }
-  )
+export function createApiResponse(data: Record<string, unknown>, status: number = 200) {
+  return apiSuccess(data, status)
 }
 
 /**
@@ -204,3 +189,48 @@ export const RATE_LIMITS = {
     maxRequests: 10000,
   },
 } as const
+
+/**
+ * Log a completed v1 API request.
+ * Wraps logApiUsage so callers don't repeat the same boilerplate.
+ */
+export async function logRequest(
+  req: NextRequest,
+  context: ApiContext,
+  endpoint: string,
+  method: string,
+  statusCode: number,
+  startTime: number
+): Promise<void> {
+  await logApiUsage({
+    apiKeyId: context.apiKeyId,
+    endpoint,
+    method,
+    statusCode,
+    responseTime: Date.now() - startTime,
+    ipAddress: req.headers.get("x-forwarded-for") || undefined,
+    userAgent: req.headers.get("user-agent") || undefined,
+  })
+}
+
+/**
+ * Checks the API key rate limit for a given context.
+ * Returns a 429 error response if exceeded, otherwise null.
+ */
+export async function checkApiRateLimit(
+  context: ApiContext
+): Promise<NextResponse | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: context.userId },
+    select: { tier: true },
+  })
+
+  const limits = RATE_LIMITS[user?.tier as keyof typeof RATE_LIMITS] || RATE_LIMITS.free
+  const exceeded = await isRateLimitExceeded(
+    context.apiKeyId,
+    limits.windowMinutes,
+    limits.maxRequests
+  )
+
+  return exceeded ? createApiError("Rate limit exceeded", 429) : null
+}

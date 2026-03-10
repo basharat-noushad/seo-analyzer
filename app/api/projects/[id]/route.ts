@@ -14,41 +14,28 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { id } = params
 
     const project = await prisma.project.findFirst({
-      where: {
-        id,
-        userId: user.id,
-      },
+      where: { id, userId: user.id },
       include: {
         pages: true,
         _count: {
-          select: {
-            analyses: true,
-            issues: true,
-            keywords: true,
-          },
+          select: { analyses: true, issues: true, keywords: true },
         },
       },
     })
 
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      )
-    }
+    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 })
 
     return NextResponse.json({ project })
   } catch (error) {
     console.error("Error fetching project:", error)
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    )
+    return NextResponse.json({ error: "Failed to fetch project" }, { status: 500 })
   }
 }
 
@@ -56,8 +43,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { id } = params
     const body = await req.json()
 
@@ -109,18 +98,7 @@ export async function PATCH(
     })
   } catch (error) {
     console.error("Error updating project:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to update project" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to update project" }, { status: 500 })
   }
 }
 
@@ -136,8 +114,10 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { id } = params
 
     // Check if project exists and belongs to user
@@ -165,17 +145,6 @@ export async function DELETE(
     })
   } catch (error) {
     console.error("Error deleting project:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to delete project" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to delete project" }, { status: 500 })
   }
 }

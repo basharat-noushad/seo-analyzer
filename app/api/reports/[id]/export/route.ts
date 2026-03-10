@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * POST /api/reports/[id]/export
@@ -103,7 +103,7 @@ export async function POST(
         "Content-Length": pdfBuffer.length.toString(),
       },
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error exporting report:", error)
     return NextResponse.json(
       { error: "Failed to export report" },
@@ -154,7 +154,7 @@ export async function GET(
       pdfUrl: report.pdfUrl,
       reportName: report.name,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error downloading report:", error)
     return NextResponse.json(
       { error: "Failed to download report" },

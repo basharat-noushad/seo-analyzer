@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/reports/public/[token]
@@ -60,7 +60,7 @@ export async function GET(
     }
 
     return NextResponse.json({ report: publicReport })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching public report:", error)
     return NextResponse.json(
       { error: "Failed to fetch report" },

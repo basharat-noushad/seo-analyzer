@@ -18,7 +18,12 @@
       "Bash(ls:*)",
       "Bash(rm:*)",
       "Bash(npx prisma:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(xargs sed:*)",
+      "Read(//c/Users/basha/**)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(timeout:*)",
+      "Bash(ping:*)"
     ],
     "deny": [],
     "ask": []

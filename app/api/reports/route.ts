@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 import { nanoid } from "nanoid"
 
 /**
@@ -19,14 +20,14 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get("type")
 
     // Build query
-    const where: any = {}
+    const where: Prisma.ReportWhereInput = {}
 
     // Get user's projects first
     const userProjects = await prisma.project.findMany({
       where: { userId: session.user.id },
       select: { id: true },
     })
-    const projectIds = userProjects.map((p: any) => p.id)
+    const projectIds = userProjects.map(p => p.id)
 
     where.projectId = { in: projectIds }
 
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ reports })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching reports:", error)
     return NextResponse.json(
       { error: "Failed to fetch reports" },
@@ -148,7 +149,7 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ report }, { status: 201 })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating report:", error)
     return NextResponse.json(
       { error: "Failed to create report" },

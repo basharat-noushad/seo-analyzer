@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 import * as cheerio from "cheerio"
 
 /**
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
       alerts,
       changes: previousAnalysis ? detectChanges(previousAnalysis, newAnalysis) : [],
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error triggering monitoring scan:", error)
     return NextResponse.json(
       { error: "Failed to trigger monitoring scan" },
@@ -253,8 +253,8 @@ async function performSEOAnalysis(url: string) {
       mediumIssues: issues.medium,
       lowIssues: issues.low,
     }
-  } catch (error: any) {
-    throw new Error(`Failed to analyze URL: ${error.message}`)
+  } catch (error) {
+    throw new Error(`Failed to analyze URL: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
 

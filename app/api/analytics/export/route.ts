@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 export const dynamic = 'force-dynamic'
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
         },
       })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error exporting analytics:", error)
     return NextResponse.json(
       { error: "Failed to export analytics" },

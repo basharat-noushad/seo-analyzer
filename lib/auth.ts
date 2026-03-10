@@ -17,12 +17,12 @@ export async function getCurrentUser() {
   try {
     const session = await getServerSession()
 
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return null
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       select: {
         id: true,
         email: true,
@@ -116,14 +116,8 @@ export async function getSubscriptionStatus() {
 
 /**
  * API Auth - for use in API routes
- * Throws error if not authenticated
+ * Returns null if not authenticated (callers must check and return 401)
  */
 export async function requireApiAuth() {
-  const user = await getCurrentUser()
-
-  if (!user) {
-    throw new Error("Unauthorized")
-  }
-
-  return user
+  return getCurrentUser()
 }

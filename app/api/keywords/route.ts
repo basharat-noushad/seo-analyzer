@@ -6,31 +6,25 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { requireApiAuth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { checkUsageLimit } from "@/lib/usage-limits"
 
 export async function GET(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { searchParams } = new URL(req.url)
     const projectId = searchParams.get("projectId")
 
-    // Build query to get keywords for user's projects
-    const where: any = {}
+    const where: Prisma.KeywordWhereInput = {}
     if (projectId) {
-      // Verify project belongs to user
-      const project = await prisma.project.findFirst({
-        where: { id: projectId, userId: user.id },
-      })
-      if (!project) {
-        return NextResponse.json(
-          { error: "Project not found" },
-          { status: 404 }
-        )
-      }
+      const owned = await prisma.project.count({ where: { id: projectId, userId: user.id } })
+      if (!owned) return NextResponse.json({ error: "Project not found" }, { status: 404 })
       where.projectId = projectId
     } else {
-      // Get keywords for all user's projects
       where.project = { userId: user.id }
     }
 
@@ -40,11 +34,7 @@ export async function GET(req: NextRequest) {
       take: 200,
       include: {
         project: {
-          select: {
-            id: true,
-            name: true,
-            domain: true,
-          },
+          select: { id: true, name: true, domain: true },
         },
       },
     })
@@ -52,69 +42,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ keywords })
   } catch (error) {
     console.error("Error fetching keywords:", error)
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    )
+    return NextResponse.json({ error: "Failed to fetch keywords" }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const user = await requireApiAuth()
-    const body = await req.json()
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  try {
+    const body = await req.json()
     const { projectId, keyword, searchVolume, difficulty, targetUrl } = body
 
-    // Validation
     if (!projectId || !keyword) {
-      return NextResponse.json(
-        { error: "Project ID and keyword are required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Project ID and keyword are required" }, { status: 400 })
     }
 
-    // Verify project belongs to user
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        userId: user.id,
-      },
-    })
+    const owned = await prisma.project.count({ where: { id: projectId, userId: user.id } })
+    if (!owned) return NextResponse.json({ error: "Project not found" }, { status: 404 })
 
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found" },
-        { status: 404 }
-      )
-    }
-
-    // Check usage limits
-    const { checkUsageLimit } = await import("@/lib/usage-limits")
     const usageCheck = await checkUsageLimit(user.id, "add_keyword")
     if (!usageCheck.allowed) {
-      return NextResponse.json(
-        { error: usageCheck.message, code: "TIER_LIMIT_REACHED" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: usageCheck.message, code: "TIER_LIMIT_REACHED" }, { status: 403 })
     }
 
-    // Check if keyword already exists for this project
     const existingKeyword = await prisma.keyword.findFirst({
-      where: {
-        projectId,
-        keyword: keyword.toLowerCase(),
-      },
+      where: { projectId, keyword: keyword.toLowerCase() },
     })
-
     if (existingKeyword) {
-      return NextResponse.json(
-        { error: "Keyword already tracked for this project" },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: "Keyword already tracked for this project" }, { status: 409 })
     }
 
-    // Create keyword record
     const savedKeyword = await prisma.keyword.create({
       data: {
         projectId,
@@ -125,35 +83,13 @@ export async function POST(req: NextRequest) {
         targetUrl: targetUrl || null,
       },
       include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        project: { select: { id: true, name: true } },
       },
     })
 
-    return NextResponse.json(
-      {
-        keyword: savedKeyword,
-        message: "Keyword saved successfully",
-      },
-      { status: 201 }
-    )
+    return NextResponse.json({ keyword: savedKeyword, message: "Keyword saved successfully" }, { status: 201 })
   } catch (error) {
     console.error("Error saving keyword:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to save keyword" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to save keyword" }, { status: 500 })
   }
 }

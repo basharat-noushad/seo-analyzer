@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import type { CheerioAPI } from 'cheerio';
+import { validateUrl, getClientIp } from '@/lib/url-validator';
 
 // Force dynamic rendering since we use headers() for client IP
 export const dynamic = 'force-dynamic';
@@ -287,17 +288,9 @@ export async function POST(req: NextRequest) {
     const { checkRateLimit: checkLimit } = await import("@/lib/rate-limit");
     const rateLimitCheck = await checkLimit(clientIp, 10, 3600);
     if (!rateLimitCheck.success) {
-      return NextResponse.json({
-        error: true,
-        message: `Rate limit exceeded. Try again later.`,
-        code: 'RATE_LIMIT_EXCEEDED',
-        statusCode: 429,
-        timestamp: new Date().toISOString(),
-        details: { remaining: rateLimitCheck.remaining, reset: rateLimitCheck.reset },
-      }, {
-        status: 429,
-        headers: { 'Retry-After': rateLimitCheck.reset.toString() }
-      });
+      const res = createErrorResponse('Rate limit exceeded. Try again later.', 'RATE_LIMIT_EXCEEDED');
+      res.headers.set('Retry-After', rateLimitCheck.reset.toString());
+      return res;
     }
 
     // Check robots.txt for both URLs (in parallel if both provided)
@@ -337,7 +330,7 @@ export async function POST(req: NextRequest) {
     // Generate comparison if both URLs analyzed
     let comparison: ComparisonResult | undefined;
     if (myAnalysis && competitorAnalysis.success && myAnalysis.success) {
-      comparison = generateComparison(competitorAnalysis, myAnalysis);
+      comparison = generateComparison(competitorAnalysis as PageAnalysisResult, myAnalysis as PageAnalysisResult);
     }
 
     // Build response
@@ -355,11 +348,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(response);
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('API error:', error);
 
     // Handle specific error types
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       return NextResponse.json({
         error: true,
         message: 'Request timeout. The page took too long to respond.',
@@ -376,68 +369,10 @@ export async function POST(req: NextRequest) {
       statusCode: 500,
       timestamp: new Date().toISOString(),
       details: {
-        originalError: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        originalError: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined,
       },
     }, { status: 500 });
   }
-}
-
-// ============================================================================
-// VALIDATION
-// ============================================================================
-
-function validateUrl(url: string): { valid: boolean; error?: string } {
-  try {
-    const parsed = new URL(url);
-
-    // Check protocol
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return { valid: false, error: 'Only HTTP and HTTPS protocols are allowed' };
-    }
-
-    // Check for localhost
-    if (['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(parsed.hostname)) {
-      return { valid: false, error: 'Localhost URLs are not allowed' };
-    }
-
-    // Check for private IP ranges
-    if (
-      /^10\./.test(parsed.hostname) ||
-      /^172\.(1[6-9]|2[0-9]|3[01])\./.test(parsed.hostname) ||
-      /^192\.168\./.test(parsed.hostname)
-    ) {
-      return { valid: false, error: 'Private IP addresses are not allowed' };
-    }
-
-    // Check for SERP URLs
-    const serpDomains = ['google.com', 'bing.com', 'yahoo.com', 'duckduckgo.com'];
-    const domain = parsed.hostname.replace(/^www\./, '');
-    if (serpDomains.some(serp => domain.includes(serp))) {
-      if (parsed.pathname.includes('/search') || parsed.pathname.includes('/results')) {
-        return { valid: false, error: 'Search engine result pages cannot be analyzed' };
-      }
-    }
-
-    // Check length
-    if (url.length > 2048) {
-      return { valid: false, error: 'URL too long (max 2048 characters)' };
-    }
-
-    return { valid: true };
-
-  } catch (error) {
-    return { valid: false, error: 'Invalid URL format' };
-  }
-}
-
-function getClientIp(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) return realIp;
-
-  return 'unknown';
 }
 
 // ============================================================================
@@ -525,7 +460,7 @@ function parseRobotsTxt(robotsTxt: string, pathname: string): boolean {
 // PAGE ANALYSIS
 // ============================================================================
 
-async function analyzeUrl(url: string): Promise<PageAnalysisResult> {
+async function analyzeUrl(url: string): Promise<PageAnalysisResult | FailedPageAnalysis> {
   const timestamp = new Date().toISOString();
   const warnings: string[] = [];
   const errors: string[] = [];
@@ -585,30 +520,18 @@ async function analyzeUrl(url: string): Promise<PageAnalysisResult> {
       success: true,
     };
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Analysis error:', error);
-    errors.push(error.message || 'Analysis failed');
+    errors.push(error instanceof Error ? error.message : 'Analysis failed');
     return createErrorResult(url, timestamp, errors);
   }
 }
 
-function createErrorResult(url: string, timestamp: string, errors: string[]): PageAnalysisResult {
-  return {
-    url,
-    originalUrl: url,
-    timestamp,
-    basicInfo: {} as any,
-    seo: {} as any,
-    headings: {} as any,
-    content: {} as any,
-    links: {} as any,
-    media: {} as any,
-    structuredData: {} as any,
-    technical: {} as any,
-    warnings: [],
-    errors,
-    success: false,
-  };
+type FailedPageAnalysis = Pick<PageAnalysisResult, 'url' | 'originalUrl' | 'timestamp' | 'warnings' | 'errors' | 'success'>
+  & Partial<Omit<PageAnalysisResult, 'url' | 'originalUrl' | 'timestamp' | 'warnings' | 'errors' | 'success'>>
+
+function createErrorResult(url: string, timestamp: string, errors: string[]): FailedPageAnalysis {
+  return { url, originalUrl: url, timestamp, warnings: [], errors, success: false };
 }
 
 // ============================================================================
@@ -684,11 +607,11 @@ async function fetchPageHtml(url: string): Promise<{
       },
     };
 
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
       return { success: false, error: 'Request timeout' };
     }
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : 'Fetch failed' };
   }
 }
 

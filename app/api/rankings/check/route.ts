@@ -9,8 +9,10 @@ import { requireApiAuth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 export async function POST(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { keyword, targetUrl, searchEngine = "google", country = "US", projectId } = await req.json()
 
     if (!keyword || !targetUrl) {
@@ -82,17 +84,6 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error("Error checking rankings:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to check rankings" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to check rankings" }, { status: 500 })
   }
 }

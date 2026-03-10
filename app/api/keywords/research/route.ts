@@ -9,8 +9,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireApiAuth } from "@/lib/auth"
 
 export async function POST(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
 
     // Check tier - keyword research requires Pro+
     if (user.tier === "free") {
@@ -45,17 +47,6 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error("Error researching keywords:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to research keywords" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to research keywords" }, { status: 500 })
   }
 }

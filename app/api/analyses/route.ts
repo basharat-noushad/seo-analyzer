@@ -6,19 +6,21 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { requireApiAuth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { calculateSeoScore } from "@/lib/seo-score"
 
 export async function GET(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { searchParams } = new URL(req.url)
     const projectId = searchParams.get("projectId")
 
-    const where: any = { userId: user.id }
-    if (projectId) {
-      where.projectId = projectId
-    }
+    const where: Prisma.AnalysisWhereInput = { userId: user.id }
+    if (projectId) where.projectId = projectId
 
     const analyses = await prisma.analysis.findMany({
       where,
@@ -26,11 +28,7 @@ export async function GET(req: NextRequest) {
       take: 100,
       include: {
         project: {
-          select: {
-            id: true,
-            name: true,
-            domain: true,
-          },
+          select: { id: true, name: true, domain: true },
         },
       },
     })
@@ -38,16 +36,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ analyses })
   } catch (error) {
     console.error("Error fetching analyses:", error)
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    )
+    return NextResponse.json({ error: "Failed to fetch analyses" }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const body = await req.json()
 
     const { projectId, url, competitorUrl, analysisData } = body
@@ -60,71 +57,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Calculate SEO score from analysis data
-    const calculateSeoScore = (data: any): number => {
-      let score = 50 // Base score
+    const competitor = analysisData.competitor || analysisData
+    const seoScore = calculateSeoScore(competitor)
 
-      const competitor = data.competitor || data
-
-      // Title (15 points)
-      if (competitor.seo?.title?.content) {
-        score += 10
-        if (competitor.seo.title.length >= 30 && competitor.seo.title.length <= 60) {
-          score += 5
-        }
-      }
-
-      // Meta description (10 points)
-      if (competitor.seo?.metaDescription?.content) {
-        score += 10
-      }
-
-      // H1 (10 points)
-      if (competitor.headings?.quality?.h1Count === 1) {
-        score += 10
-      }
-
-      // Content (15 points)
-      if (competitor.content?.wordCount) {
-        if (competitor.content.wordCount > 300) score += 5
-        if (competitor.content.wordCount > 1000) score += 5
-        if (competitor.content.paragraphCount > 3) score += 5
-      }
-
-      return Math.min(score, 100)
-    }
-
-    const seoScore = calculateSeoScore(analysisData)
-
-    // Count issues by severity
-    const countIssues = (data: any) => {
-      const counts = {
-        critical: 0,
-        high: 0,
-        medium: 0,
-        low: 0,
-      }
-
-      const competitor = data.competitor || data
-
-      // Critical issues
-      if (!competitor.seo?.title?.content) counts.critical++
-      if (!competitor.seo?.metaDescription?.content) counts.critical++
-      if (competitor.headings?.quality?.h1Count !== 1) counts.critical++
-
-      // High issues
-      if (competitor.seo?.title?.length > 60 || competitor.seo?.title?.length < 30) counts.high++
-      if (competitor.content?.wordCount < 300) counts.high++
-
-      // Medium issues
-      if (competitor.media?.totalImages > 0 && competitor.media?.imagesWithoutAlt > 0) {
-        counts.medium++
-      }
-
-      return counts
-    }
-
-    const issueCounts = countIssues(analysisData)
+    // Build issue records in a single pass (counts derived from the same array)
+    const issueData = buildIssues(competitor)
 
     // Create analysis record
     const analysis = await prisma.analysis.create({
@@ -144,10 +81,10 @@ export async function POST(req: NextRequest) {
         competitorUrl: competitorUrl || null,
         competitorData: competitorUrl && analysisData.mine ? analysisData.mine : null,
         comparisonData: analysisData.comparison || null,
-        criticalIssues: issueCounts.critical,
-        highIssues: issueCounts.high,
-        mediumIssues: issueCounts.medium,
-        lowIssues: issueCounts.low,
+        criticalIssues: issueData.filter(i => i.severity === "critical").length,
+        highIssues: issueData.filter(i => i.severity === "high").length,
+        mediumIssues: issueData.filter(i => i.severity === "medium").length,
+        lowIssues: issueData.filter(i => i.severity === "low").length,
       },
       include: {
         project: {
@@ -159,8 +96,12 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Create issue records from analysis
-    await createIssuesFromAnalysis(analysis.id, projectId, analysisData)
+    // Persist issue records
+    if (issueData.length > 0) {
+      await prisma.issue.createMany({
+        data: issueData.map(issue => ({ ...issue, analysisId: analysis.id, projectId: projectId || null })),
+      })
+    }
 
     // Update project's last scan time if associated
     if (projectId) {
@@ -191,143 +132,108 @@ export async function POST(req: NextRequest) {
     )
   } catch (error) {
     console.error("Error saving analysis:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to save analysis" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to save analysis" }, { status: 500 })
   }
 }
 
-// Helper function to create issues from analysis
-async function createIssuesFromAnalysis(
-  analysisId: string,
-  projectId: string | null,
-  data: any
-) {
-  const issues: any[] = []
-  const competitor = data.competitor || data
+type IssueSeed = {
+  category: string
+  severity: "critical" | "high" | "medium" | "low"
+  title: string
+  description: string
+  recommendation: string
+  url?: string
+}
 
-  // Critical: Missing title
+function buildIssues(competitor: any): IssueSeed[] {
+  const issues: IssueSeed[] = []
+  const pageUrl: string | undefined = competitor.url
+
   if (!competitor.seo?.title?.content) {
     issues.push({
-      analysisId,
-      projectId,
       category: "seo",
       severity: "critical",
       title: "Missing Page Title",
       description: "The page doesn't have a title tag",
       recommendation: "Add a descriptive title tag (30-60 characters)",
-      url: competitor.url,
+      url: pageUrl,
     })
-  }
-
-  // Critical: Missing meta description
-  if (!competitor.seo?.metaDescription?.content) {
-    issues.push({
-      analysisId,
-      projectId,
-      category: "seo",
-      severity: "critical",
-      title: "Missing Meta Description",
-      description: "The page doesn't have a meta description",
-      recommendation: "Add a compelling meta description (150-160 characters)",
-      url: competitor.url,
-    })
-  }
-
-  // Critical: H1 issues
-  if (competitor.headings?.quality?.h1Count === 0) {
-    issues.push({
-      analysisId,
-      projectId,
-      category: "seo",
-      severity: "critical",
-      title: "Missing H1 Tag",
-      description: "The page doesn't have an H1 heading",
-      recommendation: "Add a single, descriptive H1 heading",
-      url: competitor.url,
-    })
-  } else if (competitor.headings?.quality?.h1Count > 1) {
-    issues.push({
-      analysisId,
-      projectId,
-      category: "seo",
-      severity: "high",
-      title: "Multiple H1 Tags",
-      description: `The page has ${competitor.headings.quality.h1Count} H1 headings`,
-      recommendation: "Use only one H1 heading per page",
-      url: competitor.url,
-    })
-  }
-
-  // High: Title length issues
-  if (competitor.seo?.title?.content) {
-    const titleLength = competitor.seo.title.length
+  } else {
+    const titleLength: number = competitor.seo.title.length
     if (titleLength > 60) {
       issues.push({
-        analysisId,
-        projectId,
         category: "seo",
         severity: "high",
         title: "Title Too Long",
         description: `Title is ${titleLength} characters (recommended: 30-60)`,
         recommendation: "Shorten your title to 60 characters or less",
-        url: competitor.url,
+        url: pageUrl,
       })
     } else if (titleLength < 30) {
       issues.push({
-        analysisId,
-        projectId,
         category: "seo",
         severity: "medium",
         title: "Title Too Short",
         description: `Title is ${titleLength} characters (recommended: 30-60)`,
         recommendation: "Lengthen your title to at least 30 characters",
-        url: competitor.url,
+        url: pageUrl,
       })
     }
   }
 
-  // High: Low word count
+  if (!competitor.seo?.metaDescription?.content) {
+    issues.push({
+      category: "seo",
+      severity: "critical",
+      title: "Missing Meta Description",
+      description: "The page doesn't have a meta description",
+      recommendation: "Add a compelling meta description (150-160 characters)",
+      url: pageUrl,
+    })
+  }
+
+  const h1Count: number = competitor.headings?.quality?.h1Count ?? -1
+  if (h1Count === 0) {
+    issues.push({
+      category: "seo",
+      severity: "critical",
+      title: "Missing H1 Tag",
+      description: "The page doesn't have an H1 heading",
+      recommendation: "Add a single, descriptive H1 heading",
+      url: pageUrl,
+    })
+  } else if (h1Count > 1) {
+    issues.push({
+      category: "seo",
+      severity: "high",
+      title: "Multiple H1 Tags",
+      description: `The page has ${h1Count} H1 headings`,
+      recommendation: "Use only one H1 heading per page",
+      url: pageUrl,
+    })
+  }
+
   if (competitor.content?.wordCount < 300) {
     issues.push({
-      analysisId,
-      projectId,
       category: "content",
       severity: "high",
       title: "Low Word Count",
       description: `Page has only ${competitor.content.wordCount} words`,
       recommendation: "Add more quality content (aim for 1000+ words for key pages)",
-      url: competitor.url,
+      url: pageUrl,
     })
   }
 
-  // Medium: Images without alt text
   if (competitor.media?.imagesWithoutAlt > 0) {
     issues.push({
-      analysisId,
-      projectId,
       category: "seo",
       severity: "medium",
       title: "Images Missing Alt Text",
       description: `${competitor.media.imagesWithoutAlt} out of ${competitor.media.totalImages} images missing alt text`,
       recommendation: "Add descriptive alt text to all images",
-      url: competitor.url,
+      url: pageUrl,
     })
   }
 
-  // Create all issues
-  if (issues.length > 0) {
-    await prisma.issue.createMany({
-      data: issues,
-    })
-  }
+  return issues
 }

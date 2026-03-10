@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/alerts
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "50")
 
     // Build query
-    const where: any = {
+    const where: Prisma.AlertWhereInput = {
       userId: session.user.id,
     }
 
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ alerts, stats })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching alerts:", error)
     return NextResponse.json(
       { error: "Failed to fetch alerts" },
@@ -153,7 +154,7 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ alert }, { status: 201 })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating alert:", error)
     return NextResponse.json(
       { error: "Failed to create alert" },
@@ -198,7 +199,7 @@ export async function PATCH(req: NextRequest) {
       message: `${result.count} alert(s) updated`,
       count: result.count,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating alerts:", error)
     return NextResponse.json(
       { error: "Failed to update alerts" },
@@ -242,7 +243,7 @@ export async function DELETE(req: NextRequest) {
       message: `${result.count} alert(s) deleted`,
       count: result.count,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting alerts:", error)
     return NextResponse.json(
       { error: "Failed to delete alerts" },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/monitoring
@@ -18,14 +19,14 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status") // active, paused, failed
 
     // Build query
-    const where: any = {}
+    const where: Prisma.MonitoringJobWhereInput = {}
 
     // Get user's projects first
     const userProjects = await prisma.project.findMany({
       where: { userId: session.user.id },
       select: { id: true },
     })
-    const projectIds = userProjects.map((p: any) => p.id)
+    const projectIds = userProjects.map(p => p.id)
 
     where.projectId = { in: projectIds }
 
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ monitoringJobs })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching monitoring jobs:", error)
     return NextResponse.json(
       { error: "Failed to fetch monitoring jobs" },
@@ -182,7 +183,7 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ monitoringJob }, { status: existingJob ? 200 : 201 })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating monitoring job:", error)
     return NextResponse.json(
       { error: "Failed to create monitoring job" },

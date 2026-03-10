@@ -5,7 +5,8 @@
  * the auth route and server components
  */
 
-import NextAuth from "next-auth"
+import NextAuth, { type Session, type User, type Account } from "next-auth"
+import { type JWT } from "next-auth/jwt"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
@@ -22,23 +23,22 @@ export const authConfig = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials: any) {
-        if (!credentials?.email || !credentials?.password) {
+      async authorize(credentials: Partial<Record<"email" | "password", unknown>>) {
+        const email = credentials?.email as string | undefined
+        const password = credentials?.password as string | undefined
+        if (!email || !password) {
           throw new Error("Missing credentials")
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
+          where: { email }
         })
 
         if (!user || !user.passwordHash) {
           throw new Error("Invalid email or password")
         }
 
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash as string
-        )
+        const isValid = await bcrypt.compare(password, user.passwordHash as string)
 
         if (!isValid) {
           throw new Error("Invalid email or password")
@@ -97,10 +97,10 @@ export const authConfig = {
 
   callbacks: {
     // JWT callback - add custom fields to token
-    async jwt({ token, user, trigger, session }: any) {
+    async jwt({ token, user, trigger, session }: { token: JWT; user?: User; trigger?: string; session?: Session }) {
       // Initial sign in
       if (user) {
-        token.id = user.id
+        token.id = user.id!
         token.role = user.role
         token.tier = user.tier
       }
@@ -114,7 +114,7 @@ export const authConfig = {
     },
 
     // Session callback - add custom fields to session
-    async session({ session, token }: any) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
@@ -124,7 +124,7 @@ export const authConfig = {
     },
 
     // Sign in callback - handle OAuth first-time users
-    async signIn({ user, account, profile }: any) {
+    async signIn({ user, account }: { user: User; account: Account | null }) {
       // Allow credentials sign in
       if (account?.provider === "credentials") {
         return true
@@ -164,22 +164,7 @@ export const authConfig = {
     },
   },
 
-  events: {
-    // Track user sign in
-    async signIn({ user }: any) {
-      console.log(`User signed in: ${user.email}`)
-    },
-
-    // Update last sign in
-    async session({ session }: any) {
-      if (session.user?.email) {
-        await prisma.user.update({
-          where: { email: session.user.email },
-          data: { updatedAt: new Date() }
-        })
-      }
-    },
-  },
+  events: {},
 
   // Enable debug logging in development
   debug: process.env.NODE_ENV === "development",

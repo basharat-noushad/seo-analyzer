@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * PATCH /api/alerts/[id]
@@ -50,7 +50,7 @@ export async function PATCH(
     })
 
     return NextResponse.json({ alert: updated })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating alert:", error)
     return NextResponse.json(
       { error: "Failed to update alert" },
@@ -92,7 +92,7 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting alert:", error)
     return NextResponse.json(
       { error: "Failed to delete alert" },

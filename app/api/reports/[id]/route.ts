@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db"
 
 /**
  * GET /api/reports/[id]
@@ -47,7 +47,7 @@ export async function GET(
     }
 
     return NextResponse.json({ report })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching report:", error)
     return NextResponse.json(
       { error: "Failed to fetch report" },
@@ -115,7 +115,7 @@ export async function PATCH(
     })
 
     return NextResponse.json({ report: updated })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating report:", error)
     return NextResponse.json(
       { error: "Failed to update report" },
@@ -160,7 +160,7 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting report:", error)
     return NextResponse.json(
       { error: "Failed to delete report" },

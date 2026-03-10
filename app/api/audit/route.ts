@@ -46,8 +46,10 @@ interface CrawlResult {
 }
 
 export async function POST(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { domain, maxPages = 10 } = await req.json()
 
     // Validation
@@ -87,18 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(crawlResult, { status: 200 })
   } catch (error) {
     console.error("Error auditing site:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to audit site" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to audit site" }, { status: 500 })
   }
 }
 

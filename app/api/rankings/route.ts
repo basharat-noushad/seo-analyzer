@@ -6,17 +6,20 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { requireApiAuth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
 export async function GET(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { searchParams } = new URL(req.url)
     const projectId = searchParams.get("projectId")
     const keywordId = searchParams.get("keywordId")
 
-    const where: any = {}
+    const where: Prisma.KeywordRankingWhereInput = {}
 
     if (keywordId) {
       // Get rankings for a specific keyword
@@ -56,16 +59,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ rankings })
   } catch (error) {
     console.error("Error fetching rankings:", error)
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    )
+    return NextResponse.json({ error: "Failed to fetch rankings" }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const user = await requireApiAuth()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
-    const user = await requireApiAuth()
     const { projectId, keyword, url, rank, searchEngine, country } = await req.json()
 
     // Validation
@@ -152,17 +154,6 @@ export async function POST(req: NextRequest) {
     )
   } catch (error) {
     console.error("Error saving ranking:", error)
-
-    if (error instanceof Error && error.message === "Unauthorized") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Failed to save ranking" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to save ranking" }, { status: 500 })
   }
 }
